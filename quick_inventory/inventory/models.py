@@ -13,6 +13,14 @@ class Product(models.Model):
     quantity = models.PositiveIntegerField(default=0)
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2)
+    barcode = models.CharField(
+                max_length=100,
+                blank=True,
+                null=True,
+                unique=True,
+                verbose_name='Баркод',
+                help_text='Штрих-код или QR-код товара'
+            )
 
     @property
     def product_income(self):

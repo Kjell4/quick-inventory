@@ -47,8 +47,9 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
+            box-sizing: border-box;
         }
-        button {
+        button[type="submit"] {
             display: block;
             width: 100%;
             padding: 10px;
@@ -59,7 +60,7 @@
             font-size: 16px;
             cursor: pointer;
         }
-        button:hover {
+        button[type="submit"]:hover {
             background-color: #0056b3;
         }
         .back-btn {
@@ -72,6 +73,60 @@
         }
         .back-btn:hover {
             text-decoration: underline;
+        }
+
+        /* --- Поле баркода --- */
+        .barcode-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .barcode-wrapper input {
+            flex: 1;
+        }
+        .scan-btn {
+            padding: 10px 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .scan-btn:hover {
+            background-color: #1e7e34;
+        }
+
+        /* --- Уведомление при получении баркода --- */
+        .barcode-toast {
+            display: none;
+            margin-top: 6px;
+            padding: 8px 12px;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        .barcode-toast.show {
+            display: block;
+        }
+
+        /* --- Режим ожидания сканера --- */
+        .scan-waiting {
+            display: none;
+            margin-top: 6px;
+            padding: 8px 12px;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        .scan-waiting.show {
+            display: block;
         }
     </style>
 </head>
@@ -94,6 +149,26 @@
                     {% endfor %}
                 </select>
             </div>
+
+            <!-- ПОЛЕ БАРКОДА -->
+            <div class="form-group">
+                <label for="barcode">Баркод</label>
+                <div class="barcode-wrapper">
+                    <input type="text"
+                           id="barcode"
+                           name="barcode"
+                           placeholder="Отсканируй или введи вручную"
+                           autocomplete="off">
+                    <button type="button" class="scan-btn" onclick="startScan()" title="Активировать сканер">
+                        📷
+                    </button>
+                </div>
+                <div class="scan-waiting" id="scan-waiting">
+                    ⏳ Жду сканирование... Отсканируй баркод в QrBot
+                </div>
+                <div class="barcode-toast" id="barcode-toast"></div>
+            </div>
+
             <div class="form-group">
                 <label for="quantity">Количество</label>
                 <input type="number" id="quantity" name="quantity" min="0" required>
@@ -110,5 +185,74 @@
         </form>
         <a href="{% url 'dashboard' %}" class="back-btn">Вернуться на Dashboard</a>
     </div>
+
+<script>
+// ─── Проверяем URL-параметр ?code= при загрузке страницы ───────
+// QrBot в режиме redirect отправит: /add_product/?code=1234567890
+window.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code') || params.get('barcode') || params.get('content');
+    if (code) {
+        setBarcode(code);
+    }
+});
+
+// ─── Опрос сервера — ждём новый скан ───────────────────────────
+let pollInterval = null;
+let lastScanCount = 0;
+
+function startScan() {
+    const waiting = document.getElementById('scan-waiting');
+    waiting.classList.add('show');
+
+    // Запоминаем сколько сканов было до этого
+    fetch('/api/scans/')
+        .then(r => r.json())
+        .then(data => {
+            lastScanCount = data.total;
+        });
+
+    // Каждые 1.5 секунды проверяем — появился ли новый скан
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(checkNewScan, 1500);
+
+    // Останавливаем через 60 секунд если не отсканировали
+    setTimeout(stopScan, 60000);
+}
+
+function checkNewScan() {
+    fetch('/api/scans/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.total > lastScanCount) {
+                // Новый скан появился — берём последний
+                const lastScan = data.scans[data.scans.length - 1];
+                setBarcode(lastScan.content);
+                stopScan();
+            }
+        })
+        .catch(() => {}); // тихо игнорируем ошибки сети
+}
+
+function stopScan() {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+    }
+    document.getElementById('scan-waiting').classList.remove('show');
+}
+
+function setBarcode(code) {
+    document.getElementById('barcode').value = code;
+
+    const toast = document.getElementById('barcode-toast');
+    toast.textContent = '✓ Баркод получен: ' + code;
+    toast.classList.add('show');
+
+    // Прячем уведомление через 4 секунды
+    setTimeout(() => toast.classList.remove('show'), 4000);
+}
+</script>
+
 </body>
 </html>

@@ -148,7 +148,7 @@ def daily_sales(request):
             sale = form.save(commit=False)
             sale.sale_date = today  # Устанавливаем сегодняшнюю дату
             sale.total_price = sale.quantity * sale.product.sale_price  # Считаем общую сумму продажи
-            sale.save()
+            sale.save() 
 
             # Обновляем количество товара в модели Product
             product = sale.product
@@ -302,3 +302,6 @@ def login_view(request):
         form = AuthenticationForm()
     
     return render(request, 'inventory/login.html', {'form': form})
+
+def barcode_scanner_view(request):
+    return render(request, 'inventory/barcode_scanner.html')

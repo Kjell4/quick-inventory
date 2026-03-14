@@ -9,3 +9,4 @@ admin.site.register(CustomUser)
 admin.site.register(ClosedDay)
 admin.site.register(DailySale)
 
+#username: useradmin      password: 12345
