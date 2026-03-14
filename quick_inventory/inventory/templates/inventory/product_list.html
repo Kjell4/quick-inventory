@@ -16,6 +16,7 @@
 <table>
     <tr>
         <th>Название</th>
+        <th>Баркод</th>
         <th>Категория</th>
         <th>Количество</th>
         <th>Цена закупки</th>
@@ -26,6 +27,7 @@
     {% for product in products %}
     <tr>
         <td>{{ product.name }}</td>
+        <td>{{ product.barcode }}</td>
         <td>{{ product.category.name }}</td>
         <td>{{ product.quantity }}</td>
         <td>{{ product.purchase_price }}</td>
@@ -33,7 +35,8 @@
         <td>{{ product.product_income }}</td>
         <td>
             <a href="{% url 'edit_product' product.pk %}">Редактировать</a>
-            <a href="#">Удалить</a>
+            <a href="{% url 'delete_product' product.pk %}" 
+   onclick="return confirm('Удалить {{ product.name }}?')">Удалить</a>
         </td>
     </tr>
     {% endfor %}

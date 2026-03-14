@@ -77,6 +77,7 @@ def add_product(request):
         quantity = int(request.POST['quantity'])
         purchase_price = float(request.POST['purchase_price'])
         sale_price = float(request.POST['sale_price'])
+        barcode = request.POST.get('barcode', '')  # ← добавить
 
         category = Category.objects.get(id=category_id)
         Product.objects.create(
@@ -84,12 +85,21 @@ def add_product(request):
             category=category,
             quantity=quantity,
             purchase_price=purchase_price,
-            sale_price=sale_price
+            sale_price=sale_price,
+            barcode=barcode  # ← добавить
         )
         return redirect('dashboard')
 
     categories = Category.objects.all()
     return render(request, 'inventory/add_product.html', {'categories': categories})
+
+
+@login_required
+@manager_only
+def delete_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    product.delete()
+    return redirect('product_list')
 
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, Category
@@ -104,12 +114,12 @@ def edit_product(request, product_id):
         product.quantity = int(request.POST['quantity'])
         product.purchase_price = float(request.POST['purchase_price'])
         product.sale_price = float(request.POST['sale_price'])
+        product.barcode = request.POST.get('barcode', '')  # ← добавить эту строку
         product.save()
         return redirect('dashboard')
 
     categories = Category.objects.all()
     return render(request, 'inventory/edit_product.html', {'product': product, 'categories': categories})
-
 
 from django.shortcuts import render
 from .models import Transaction
