@@ -12,6 +12,7 @@ QrBot отправляет POST на /api/scans/ с телом:
 """
 
 import json
+from arrow import now
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -172,7 +173,7 @@ def scans_sell(request):
     product.save()
 
     total = product.sale_price * quantity
-    DailySale.objects.create(product=product, quantity=quantity, total_price=total)
+    DailySale.objects.create(product=product, quantity=quantity, total_price=total, sale_date=now().date())
 
     import urllib.parse
     title = f"✓ Продано: {product.name}"
@@ -272,3 +273,30 @@ def scans_create(request):
 @csrf_exempt
 def ping(request):
     return cors_response({"status": "ok", "message": "Quick Inventory API работает ✓"})
+
+@csrf_exempt
+@require_http_methods(["GET", "OPTIONS"])
+def barcode_lookup(request):
+    if request.method == "OPTIONS":
+        return cors_response({})
+
+    barcode = request.GET.get("code", "").strip()
+    if not barcode:
+        return cors_response({"error": "Параметр 'code' обязателен"}, status=400)
+
+    try:
+        product = Product.objects.select_related("category").get(barcode=barcode)
+        return cors_response({
+            "found": True,
+            "product": {
+                "id": product.id,
+                "name": product.name,
+                "barcode": product.barcode,
+                "category": product.category.name if product.category else None,
+                "quantity": product.quantity,
+                "purchase_price": float(product.purchase_price),
+                "sale_price": float(product.sale_price),
+            }
+        })
+    except Product.DoesNotExist:
+        return cors_response({"found": False, "barcode": barcode})

@@ -312,6 +312,3 @@ def login_view(request):
         form = AuthenticationForm()
     
     return render(request, 'inventory/login.html', {'form': form})
-
-def barcode_scanner_view(request):
-    return render(request, 'inventory/barcode_scanner.html')

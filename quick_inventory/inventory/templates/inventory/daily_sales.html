@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Продажи за день</title>
     <style>
-        /* Стиль как в dashboard.html */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -30,64 +29,199 @@
             text-decoration: none;
             font-size: 14px;
             font-weight: bold;
-            transition: background-color 0.3s ease;
         }
-        header .profile-btn:hover {
-            background-color: #e6e6e6;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        .container {
-            width: 90%;
-            margin: auto;
+        header .profile-btn:hover { background-color: #e6e6e6; }
+        h1 { color: white; }
+        h2 { color: #333; }
+        .container { width: 90%; margin: auto; padding: 20px; }
+        #main-theme { color: white; }
+
+        /* ── Касса ── */
+        .cashier-block {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             padding: 20px;
+            margin-bottom: 24px;
         }
-        .section {
-            margin-bottom: 30px;
+        .cashier-block h2 {
+            margin-top: 0;
+            color: #007BFF;
+            border-bottom: 2px solid #007BFF;
+            padding-bottom: 8px;
         }
-        table {
+
+        /* Поле сканирования */
+        .scan-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .scan-row input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #007BFF;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+        }
+        .scan-row input[type="text"]:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+        }
+        .scan-btn-icon {
+            padding: 12px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 22px;
+            cursor: pointer;
+        }
+        .scan-btn-icon:hover { background-color: #1e7e34; }
+
+        /* Статус сканера */
+        .scan-status {
+            padding: 8px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .scan-status.waiting {
+            display: block;
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .scan-status.found {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .scan-status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Корзина (список отсканированных) */
+        .cart-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-bottom: 16px;
         }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
+        .cart-table th {
+            background-color: #007BFF;
+            color: white;
             padding: 10px;
             text-align: left;
         }
-        th {
-            background-color: #007BFF;
-            color: white;
+        .cart-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
         }
-        #close-day-btn{
-            background-color: rgb(170, 0, 0);
+        .cart-table tr:hover td { background: #f8f9ff; }
+        .qty-input {
+            width: 70px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
         }
-        .actions a {
-            text-decoration: none;
+        .qty-input:focus { border-color: #007BFF; outline: none; }
+        .remove-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        .remove-btn:hover { color: #a71d2a; }
+        .cart-empty {
+            text-align: center;
+            color: #aaa;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        /* Итог корзины */
+        .cart-total {
+            background: #f8f9ff;
+            border: 1px solid #dee2ff;
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+        .cart-total span {
+            font-weight: bold;
             color: #007BFF;
-            margin-right: 10px;
+            font-size: 18px;
         }
-        .actions a:hover {
-            text-decoration: underline;
+
+        /* Кнопка подтвердить */
+        .confirm-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
         }
+        .confirm-btn:hover { background-color: #1e7e34; }
+        .confirm-btn:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+
+        /* ── Таблица продаж за день ── */
+        .sales-block {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 10px; text-align: left; }
+        th { background-color: #007BFF; color: white; }
+
         .add-btn {
             display: inline-block;
-            margin-top: 10px;
             padding: 10px 15px;
             background-color: #007BFF;
             color: white;
             text-decoration: none;
             border-radius: 5px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
         }
-        .add-btn:hover {
-            background-color: #0056b3;
+        .add-btn:hover { background-color: #0056b3; }
+        #close-day-btn { background-color: rgb(170, 0, 0); }
+
+        /* Ручная форма */
+        .manual-block {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 24px;
         }
-        #main-theme{
-            color:white;
-        }
+        .manual-block h2 { margin-top: 0; }
     </style>
 </head>
 <body>
@@ -97,42 +231,278 @@
     </header>
 
     <div class="container">
-        <!-- Форма для добавления продаж -->
-        <h2>Добавить продажу</h2>
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="add-btn">Добавить продажу</button>
-        </form>
 
-        <!-- Список проданных товаров -->
-        <h2>Продажи за день</h2>
-        <table>
-            <tr>
-                <th>Товар</th>
-                <th>Количество</th>
-                <th>Общая сумма</th>
-                <th>Действия</th>
-            </tr>
-            {% for sale in sales %}
-            <tr>
-                <td>{{ sale.product.name }}</td>
-                <td>{{ sale.quantity }}</td>
-                <td>{{ sale.total_price }}</td>
-                <td><form action="{% url 'delete_sale' sale.id %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Удалить</button>
-                </form></td>
-            </tr>
-            {% endfor %}
-        </table>
+        <!-- ══ КАССА ════════════════════════════════════════════ -->
+        <div class="cashier-block">
+            <h2>🔍 Сканер баркода</h2>
 
-        <h2>Итоги за день</h2>
-        <p><strong>Общий доход:</strong> {{ total_income }}</p>
-        <p><strong>Чистая прибыль:</strong> {{ total_profit }}</p>
+            <div class="scan-row">
+                <input type="text"
+                       id="scan-input"
+                       placeholder="Отсканируй баркод или введи вручную..."
+                       autocomplete="off"
+                       autofocus
+                       onkeydown="if(event.key==='Enter'){ event.preventDefault(); processScan(); }"
+                       oninput="onManualInput()">
+                <button type="button" class="scan-btn-icon" onclick="startPoll()" title="Ждать QrBot">📷</button>
+            </div>
 
-        <!-- Кнопка завершения дня -->
+            <div class="scan-status" id="scan-status"></div>
+
+            <!-- Корзина отсканированных товаров -->
+            <table class="cart-table" id="cart-table">
+                <thead>
+                    <tr>
+                        <th>Товар</th>
+                        <th>Баркод</th>
+                        <th>Цена</th>
+                        <th style="width:100px">Кол-во</th>
+                        <th>Сумма</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cart-body">
+                    <tr id="cart-empty-row">
+                        <td colspan="6" class="cart-empty">Отсканируй товар — он появится здесь</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="cart-total">
+                Итого к оплате: <span id="cart-total-value">0 ₸</span>
+            </div>
+
+            <button class="confirm-btn" id="confirm-btn" onclick="confirmSales()" disabled>
+                ✓ Подтвердить продажу
+            </button>
+        </div>
+
+        <!-- ══ ПРОДАЖИ ЗА ДЕНЬ ══════════════════════════════════ -->
+        <div class="sales-block">
+            <h2>Продажи за день</h2>
+            <table>
+                <tr>
+                    <th>Товар</th>
+                    <th>Количество</th>
+                    <th>Общая сумма</th>
+                    <th>Действия</th>
+                </tr>
+                {% for sale in sales %}
+                <tr>
+                    <td>{{ sale.product.name }}</td>
+                    <td>{{ sale.quantity }}</td>
+                    <td>{{ sale.total_price }}</td>
+                    <td>
+                        <form action="{% url 'delete_sale' sale.id %}" method="POST" style="display:inline">
+                            {% csrf_token %}
+                            <button type="submit" class="add-btn" style="background:#dc3545; margin:0;">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <p><strong>Общий доход:</strong> {{ total_income }}</p>
+            <p><strong>Чистая прибыль:</strong> {{ total_profit }}</p>
+        </div>
+
+        <!-- ══ РУЧНАЯ ФОРМА ══════════════════════════════════════
+        <div class="manual-block">
+            <h2>Добавить продажу вручную</h2>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="add-btn">Добавить продажу</button>
+            </form>
+        </div>-->
+
         <a href="{% url 'close_day' %}" class="add-btn" id="close-day-btn">Закончить день</a>
     </div>
+
+<script>
+// ── Корзина в памяти ───────────────────────────────────────────
+// { barcode: { id, name, price, quantity, barcode } }
+const cart = {};
+
+// ── Опрос QrBot ────────────────────────────────────────────────
+let pollInterval = null;
+let lastScanCount = 0;
+
+function startPoll() {
+    if (pollInterval) return; // уже запущен
+    fetch('/api/scans/')
+        .then(r => r.json())
+        .then(data => { lastScanCount = data.total; });
+
+    pollInterval = setInterval(() => {
+        fetch('/api/scans/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.total > lastScanCount) {
+                    const last = data.scans[data.scans.length - 1];
+                    lastScanCount = data.total; // обновляем счётчик сразу
+                    document.getElementById('scan-input').value = last.content;
+                    processScan(); // НЕ останавливаем — продолжаем слушать
+                }
+            })
+            .catch(() => {});
+    }, 1500);
+}
+
+// ── Ручной ввод — автосабмит после паузы ──────────────────────
+let inputTimer = null;
+function onManualInput() {
+    clearTimeout(inputTimer);
+    const val = document.getElementById('scan-input').value.trim();
+    if (val.length >= 6) {
+        inputTimer = setTimeout(processScan, 700);
+    }
+}
+
+// ── Обработка сканирования ─────────────────────────────────────
+function processScan() {
+    const code = document.getElementById('scan-input').value.trim();
+    if (!code) return;
+
+    clearTimeout(inputTimer);
+    setStatus('waiting', '🔍 Ищу товар...');
+
+    fetch('/api/barcode/lookup/?code=' + encodeURIComponent(code))
+        .then(r => r.json())
+        .then(data => {
+            if (data.found) {
+                addToCart(data.product);
+                setStatus('found', '✓ Добавлено: <strong>' + data.product.name + '</strong>');
+                document.getElementById('scan-input').value = '';
+                document.getElementById('scan-input').focus();
+                // Убрать статус через 2 секунды
+                setTimeout(() => setStatus('', ''), 2000);
+            } else {
+                setStatus('error', '✗ Товар с баркодом <strong>' + code + '</strong> не найден в базе');
+            }
+        })
+        .catch(() => setStatus('error', '✗ Ошибка подключения к серверу'));
+}
+
+// ── Добавить товар в корзину ───────────────────────────────────
+function addToCart(product) {
+    const key = product.barcode || product.id;
+
+    if (cart[key]) {
+        // Товар уже в корзине — увеличиваем количество
+        cart[key].quantity += 1;
+    } else {
+        cart[key] = {
+            id: product.id,
+            name: product.name,
+            price: product.sale_price,
+            barcode: product.barcode,
+            quantity: 1
+        };
+    }
+    renderCart();
+}
+
+// ── Отрисовка корзины ──────────────────────────────────────────
+function renderCart() {
+    const tbody = document.getElementById('cart-body');
+    const keys = Object.keys(cart);
+
+    if (keys.length === 0) {
+        tbody.innerHTML = '<tr id="cart-empty-row"><td colspan="6" class="cart-empty">Отсканируй товар — он появится здесь</td></tr>';
+        document.getElementById('confirm-btn').disabled = true;
+        document.getElementById('cart-total-value').textContent = '0 ₸';
+        return;
+    }
+
+    let total = 0;
+    tbody.innerHTML = keys.map(key => {
+        const item = cart[key];
+        const sum = item.price * item.quantity;
+        total += sum;
+        return `
+            <tr>
+                <td><strong>${item.name}</strong></td>
+                <td style="color:#888;font-size:13px">${item.barcode || '—'}</td>
+                <td>${item.price} ₸</td>
+                <td>
+                    <input class="qty-input" type="number" min="1"
+                           value="${item.quantity}"
+                           onchange="updateQty('${key}', this.value)"
+                           onfocus="this.select()">
+                </td>
+                <td><strong>${sum.toFixed(2)} ₸</strong></td>
+                <td><button class="remove-btn" onclick="removeFromCart('${key}')" title="Убрать">✕</button></td>
+            </tr>
+        `;
+    }).join('');
+
+    document.getElementById('cart-total-value').textContent = total.toFixed(2) + ' ₸';
+    document.getElementById('confirm-btn').disabled = false;
+}
+
+function updateQty(key, val) {
+    const qty = parseInt(val);
+    if (qty > 0) {
+        cart[key].quantity = qty;
+        renderCart();
+    }
+}
+
+function removeFromCart(key) {
+    delete cart[key];
+    renderCart();
+}
+
+// ── Подтвердить продажу ────────────────────────────────────────
+async function confirmSales() {
+    const keys = Object.keys(cart);
+    if (keys.length === 0) return;
+
+    const btn = document.getElementById('confirm-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Сохраняем...';
+
+    let errors = [];
+
+    for (const key of keys) {
+        const item = cart[key];
+        try {
+            const r = await fetch('/api/scans/sell/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'content=' + encodeURIComponent(item.barcode) + '&quantity=' + item.quantity
+            });
+            const data = await r.json();
+            if (!data.success) {
+                errors.push(item.name + ': ' + (data.error || 'ошибка'));
+            }
+        } catch(e) {
+            errors.push(item.name + ': ошибка сети');
+        }
+    }
+
+    if (errors.length > 0) {
+        setStatus('error', '⚠ Ошибки: ' + errors.join('; '));
+        btn.disabled = false;
+        btn.textContent = '✓ Подтвердить продажу';
+    } else {
+        setStatus('found', '✓ Продажа сохранена! Обновляем страницу...');
+        setTimeout(() => location.reload(), 1000);
+    }
+}
+
+// ── Утилита статуса ────────────────────────────────────────────
+function setStatus(type, html) {
+    const el = document.getElementById('scan-status');
+    el.className = 'scan-status' + (type ? ' ' + type : '');
+    el.innerHTML = html;
+}
+
+// Запускаем опрос сразу при загрузке — кнопка больше не нужна
+startPoll();
+setTimeout(() => document.getElementById('scan-input').focus(), 100);
+</script>
+
 </body>
 </html>
