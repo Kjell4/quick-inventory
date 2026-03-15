@@ -11,7 +11,6 @@
             padding: 0;
             background-color: #f4f4f9;
         }
-
         header {
             background-color: #007BFF;
             color: white;
@@ -19,7 +18,6 @@
             text-align: center;
             position: relative;
         }
-
         header .profile-btn {
             position: absolute;
             right: 20px;
@@ -33,31 +31,23 @@
             font-weight: bold;
             transition: background-color 0.3s ease;
         }
-
-        header .profile-btn:hover {
-            background-color: #e6e6e6;
-        }
-
-        h1, h2 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        #main-theme {
-            color: white;
-        }
+        header .profile-btn:hover { background-color: #e6e6e6; }
+        h1, h2 { color: #333; margin-bottom: 15px; }
+        #main-theme { color: white; }
 
         #product_list_btn {
             background-image: url('https://img.freepik.com/free-vector/online-supermarket-foods-flat-icons-set-meat-fish-fruits-vegetables-isolated-vector-illustration_1284-2170.jpg');
         }
-
         #daily_sales_btn {
             background-image: url('https://img.freepik.com/premium-vector/vector-design-daily-sales-icon-style_822882-18308.jpg');
             background-color: white;
         }
-
         #add_product_btn {
             background-image: url('https://cdn-icons-png.flaticon.com/512/7032/7032300.png');
+            background-color: white;
+        }
+        #analytics_btn {
+            background-image: url('https://cdn-icons-png.flaticon.com/512/13079/13079933.png');
             background-color: white;
         }
 
@@ -66,10 +56,7 @@
             margin: auto;
             padding: 20px;
         }
-
-        .section {
-            margin-bottom: 30px;
-        }
+        .section { margin-bottom: 30px; }
 
         .button-container {
             display: flex;
@@ -93,24 +80,19 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
             background-size: cover;
             background-position: center;
-            color: white;
             cursor: pointer;
             position: relative;
         }
-
         .add-btn:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             background-color: #0056b3;
         }
-
-        .add-btn:active {
-            transform: translateY(2px);
-        }
+        .add-btn:active { transform: translateY(2px); }
 
         .button-text {
             position: absolute;
@@ -121,101 +103,17 @@
             font-size: 16px;
             color: #333;
             font-weight: normal;
+            white-space: nowrap;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #007BFF;
-            color: white;
-        }
-
-        .actions a {
-            text-decoration: none;
-            color: #007BFF;
-            margin-right: 10px;
-        }
-
-        .actions a:hover {
-            text-decoration: underline;
-        }
-
-        .container ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .container li {
-            margin: 10px 0;
-        }
-
-        .container li a {
-            color: #007BFF;
-            text-decoration: none;
-        }
-
-        .container li a:hover {
-            text-decoration: underline;
-        }
-        
         .footer {
             text-align: center;
             margin-top: 40px;
             font-size: 14px;
             color: #777;
         }
-
-        .footer a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-        .summary-section {
-        margin-top: 30px;
-        padding: 20px;
-        background-color: #f9f9f9;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-    }
-
-    .summary-section h2 {
-        margin-bottom: 20px;
-    }
-
-    .summary-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .summary-table th, .summary-table td {
-        text-align: left;
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
-    }
-
-    .summary-table th {
-        font-weight: bold;
-    }
-
-    .summary-table td {
-        font-size: 1.1em;
-    }
+        .footer a { color: #007bff; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -230,7 +128,7 @@
             <h2>Управление товарами</h2>
             <div class="button-container">
                 <a href="{% url 'product_list' %}" class="add-btn" id="product_list_btn">
-                    <span class="button-text">Перейти к списку товаров</span>
+                    <span class="button-text">Список товаров</span>
                 </a>
                 <a href="{% url 'add_product' %}" class="add-btn" id="add_product_btn">
                     <span class="button-text">Добавить товар</span>
@@ -238,56 +136,22 @@
             </div>
         </div>
 
-        <!-- Секция дневных продаж -->
+        <!-- Секция продаж -->
         <div class="section">
             <h2>Продажи</h2>
             <div class="button-container">
                 <a href="{% url 'daily_sales' %}" class="add-btn" id="daily_sales_btn">
                     <span class="button-text">Дневные продажи</span>
                 </a>
+                <a href="{% url 'analytics' %}" class="add-btn" id="analytics_btn">
+                    <span class="button-text">Аналитика</span>
+                </a>
             </div>
         </div>
-
-        <!-- Секция закрытых дней -->
-        <div class="section">
-            <h2>Закрытые дни</h2>
-            <ul>
-                {% for closed_day in closed_days %}
-                <li>
-                    <a href="{% url 'closed_day_detail' closed_day.id %}">
-                        Закрытие дня: {{ closed_day.date }}
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
     </div>
-
-    <div class="summary-section">
-        <h2>Итоги за месяц</h2>
-        <table class="summary-table">
-            <tr>
-                <th>Доход:</th>
-                <td>{{ total_income|floatformat:2 }} ₸</td>
-            </tr>
-            <tr>
-                <th>Расход:</th>
-                <td>{{ total_expenses|floatformat:2 }} ₸</td>
-            </tr>
-            <tr>
-                <th>Чистая прибыль:</th>
-                <td>{{ total_profit|floatformat:2 }} ₸</td>
-            </tr>
-        </table>
-    </div>
-    
 
     <div class="footer">
         <p>© 2026 Quick Inventory. Все права защищены.</p>
     </div>
-
 </body>
 </html>
-
-
-

@@ -228,13 +228,7 @@ def close_day(request):
 
     # Обновляем продажи, добавляя связь с ClosedDay и помечаем их как закрытые
     sales.update(closed_day=closed_day, is_closed=True)
-
-    # Обновляем количество товара в модели Product
-    for sale in sales:
-        product = sale.product
-        product.quantity -= sale.quantity  # Уменьшаем количество товара
-        product.save()
-
+    
     # Перенаправляем на страницу, где отображаются закрытые дни
     return redirect('dashboard')
 
@@ -312,3 +306,60 @@ def login_view(request):
         form = AuthenticationForm()
     
     return render(request, 'inventory/login.html', {'form': form})
+
+
+def analytics(request):
+    from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+    from django.utils.timezone import now
+    from datetime import timedelta
+    import json
+
+    today = now().date()
+    start_of_month = today.replace(day=1)
+    end_of_month = (today.replace(day=1) + timedelta(days=31)).replace(day=1) - timedelta(days=1)
+
+    # Итоги за месяц
+    month_sales = DailySale.objects.filter(sale_date__range=(start_of_month, end_of_month))
+    total_income   = month_sales.aggregate(total=Sum(F('quantity') * F('product__sale_price')))['total'] or 0
+    total_expenses = month_sales.aggregate(total=Sum(F('quantity') * F('product__purchase_price')))['total'] or 0
+    total_profit   = total_income - total_expenses
+
+    # Итоги за сегодня
+    day_sales = DailySale.objects.filter(sale_date=today)
+    day_income   = day_sales.aggregate(total=Sum(F('quantity') * F('product__sale_price')))['total'] or 0
+    day_expenses = day_sales.aggregate(total=Sum(F('quantity') * F('product__purchase_price')))['total'] or 0
+    day_profit   = day_income - day_expenses
+
+    # Данные по дням для графика
+    chart_labels = []
+    chart_income = []
+    chart_expenses = []
+    chart_profit = []
+
+    current = start_of_month
+    while current <= end_of_month:
+        sales_day = DailySale.objects.filter(sale_date=current)
+        inc = sales_day.aggregate(total=Sum(F('quantity') * F('product__sale_price')))['total'] or 0
+        exp = sales_day.aggregate(total=Sum(F('quantity') * F('product__purchase_price')))['total'] or 0
+        chart_labels.append(current.strftime('%d.%m'))
+        chart_income.append(float(inc))
+        chart_expenses.append(float(exp))
+        chart_profit.append(float(inc - exp))
+        current += timedelta(days=1)
+
+    closed_days = ClosedDay.objects.all().order_by('-date')
+
+    return render(request, 'inventory/analytics.html', {
+        'total_income': total_income,
+        'total_expenses': total_expenses,
+        'total_profit': total_profit,
+        'day_income': day_income,
+        'day_expenses': day_expenses,
+        'day_profit': day_profit,
+        'today': today,
+        'closed_days': closed_days,
+        'chart_labels': json.dumps(chart_labels),
+        'chart_income': json.dumps(chart_income),
+        'chart_expenses': json.dumps(chart_expenses),
+        'chart_profit': json.dumps(chart_profit),
+    })

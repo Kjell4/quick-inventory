@@ -285,25 +285,18 @@
                     <th>Товар</th>
                     <th>Количество</th>
                     <th>Общая сумма</th>
-                    <th>Действия</th>
                 </tr>
                 {% for sale in sales %}
                 <tr>
                     <td>{{ sale.product.name }}</td>
                     <td>{{ sale.quantity }}</td>
                     <td>{{ sale.total_price }}</td>
-                    <td>
-                        <form action="{% url 'delete_sale' sale.id %}" method="POST" style="display:inline">
-                            {% csrf_token %}
-                            <button type="submit" class="add-btn" style="background:#dc3545; margin:0;">Удалить</button>
-                        </form>
-                    </td>
                 </tr>
                 {% endfor %}
             </table>
 
-            <p><strong>Общий доход:</strong> {{ total_income }}</p>
-            <p><strong>Чистая прибыль:</strong> {{ total_profit }}</p>
+            <!-- <p><strong>Общий доход:</strong> {{ total_income }}</p>
+            <p><strong>Чистая прибыль:</strong> {{ total_profit }}</p> -->
         </div>
 
         <!-- ══ РУЧНАЯ ФОРМА ══════════════════════════════════════

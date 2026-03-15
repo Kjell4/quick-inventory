@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитика</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        header .profile-btn {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background-color: white;
+            color: #007BFF;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        header .profile-btn:hover { background-color: #e6e6e6; }
+        h1 { color: white; margin: 0; }
+        h2 { color: #333; margin-bottom: 15px; }
+
+        .container {
+            width: 90%;
+            margin: auto;
+            padding: 20px;
+        }
+
+        /* Итоги за месяц */
+        .summary-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary-table th, .summary-table td {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .summary-table th {
+            font-weight: bold;
+            color: #555;
+            width: 40%;
+        }
+        .summary-table td {
+            font-size: 1.15em;
+            font-weight: bold;
+            color: #007BFF;
+        }
+
+        /* Закрытые дни */
+        .closed-days-section {
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .container ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .container li {
+            margin: 8px 0;
+            padding: 10px;
+            background: #f8f9ff;
+            border-radius: 5px;
+            border-left: 4px solid #007BFF;
+        }
+        .container li a {
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .container li a:hover { text-decoration: underline; }
+        .empty-msg {
+            color: #aaa;
+            font-size: 14px;
+            padding: 10px 0;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover { background-color: #0056b3; }
+
+        .chart-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-section h2 { margin-top: 0; }
+        .chart-wrapper { position: relative; height: 320px; }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Аналитика</h1>
+        <a href="{% url 'profile' %}" class="profile-btn">Профиль</a>
+    </header>
+
+    <div class="container">
+        <a href="{% url 'dashboard' %}" class="back-btn">← Вернуться на Dashboard</a>
+
+        <!-- Итоги за сегодня -->
+        <div class="summary-section">
+            <h2>Итоги за сегодня ({{ today }})</h2>
+            <table class="summary-table">
+                <tr>
+                    <th>Доход:</th>
+                    <td>{{ day_income|floatformat:2 }} ₸</td>
+                </tr>
+                <tr>
+                    <th>Расход:</th>
+                    <td>{{ day_expenses|floatformat:2 }} ₸</td>
+                </tr>
+                <tr>
+                    <th>Чистая прибыль:</th>
+                    <td>{{ day_profit|floatformat:2 }} ₸</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Итоги за месяц -->
+        <div class="summary-section">
+            <h2>Итоги за месяц</h2>
+            <table class="summary-table">
+                <tr>
+                    <th>Доход:</th>
+                    <td>{{ total_income|floatformat:2 }} ₸</td>
+                </tr>
+                <tr>
+                    <th>Расход:</th>
+                    <td>{{ total_expenses|floatformat:2 }} ₸</td>
+                </tr>
+                <tr>
+                    <th>Чистая прибыль:</th>
+                    <td>{{ total_profit|floatformat:2 }} ₸</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- График по дням за месяц -->
+        <div class="chart-section">
+            <h2>📈 Доход и расход по дням за месяц</h2>
+            <div class="chart-wrapper">
+                <canvas id="monthChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Закрытые дни -->
+        <div class="closed-days-section">
+            <h2>Закрытые дни</h2>
+            <ul>
+                {% for closed_day in closed_days %}
+                <li>
+                    <a href="{% url 'closed_day_detail' closed_day.id %}">
+                        📅 Закрытие дня: {{ closed_day.date }}
+                    </a>
+                </li>
+                {% empty %}
+                <p class="empty-msg">Закрытых дней пока нет.</p>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2026 Quick Inventory. Все права защищены.</p>
+    </div>
+
+<script>
+    const labels   = {{ chart_labels|safe }};
+    const income   = {{ chart_income|safe }};
+    const expenses = {{ chart_expenses|safe }};
+    const profit   = {{ chart_profit|safe }};
+
+    new Chart(document.getElementById('monthChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Доход',
+                    data: income,
+                    backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                    borderColor: '#007BFF',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Расход',
+                    data: expenses,
+                    backgroundColor: 'rgba(220, 53, 69, 0.6)',
+                    borderColor: '#dc3545',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Прибыль',
+                    data: profit,
+                    backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                    borderColor: '#28a745',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + ' ₸'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: val => val.toLocaleString() + ' ₸'
+                    }
+                },
+                x: {
+                    ticks: { maxRotation: 45 }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>
