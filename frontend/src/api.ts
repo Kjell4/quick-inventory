@@ -147,3 +147,33 @@ export const dashboardApi = {
 export const categoriesApi = {
   list: () => apiFetch('/categories/'),
 };
+
+// ─── Barcode / QrBot API ──────────────────────────────────────────
+const DJANGO_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+export const barcodeApi = {
+  /** GET /api/scans/ — список всех сканов (QrBot накапливает в памяти) */
+  getScans: (): Promise<{ scans: { content: string; format: string }[]; total: number }> =>
+    fetch(`${DJANGO_BASE}/api/scans/`).then(r => r.json()),
+
+  /** GET /api/barcode/lookup/?code=XXX — найти товар по баркоду */
+  lookup: (code: string): Promise<{
+    found: boolean;
+    product?: {
+      id: number; name: string; barcode: string;
+      quantity: number; sale_price: number;
+      purchase_price: number; category: string;
+    };
+  }> =>
+    fetch(`${DJANGO_BASE}/api/barcode/lookup/?code=${encodeURIComponent(code)}`).then(r => r.json()),
+
+  /** POST /api/scans/sell/ — продать товар по баркоду (QrBot-совместимый эндпоинт) */
+  sell: (barcode: string, quantity: number): Promise<{
+    success: boolean; product?: string; remaining?: number; total_price?: number; error?: string;
+  }> =>
+    fetch(`${DJANGO_BASE}/api/scans/sell/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `content=${encodeURIComponent(barcode)}&quantity=${quantity}`,
+    }).then(r => r.json()),
+};
