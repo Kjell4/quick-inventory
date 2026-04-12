@@ -599,3 +599,82 @@ def categories_list(request):
 
     cats = Category.objects.all().order_by("name")
     return json_response({"categories": [{"id": c.id, "name": c.name} for c in cats]})
+
+
+# ─────────────────────────────────────────────────────────────────
+#  RECEIPTS  (closed days list + detail)
+# ─────────────────────────────────────────────────────────────────
+@csrf_exempt
+def receipts_list(request):
+    """GET /api/v2/receipts/ — list of all closed days (receipts)"""
+    if request.method == "OPTIONS":
+        return json_response({})
+
+    user, err = require_auth(request)
+    if err:
+        return err
+
+    closed_days = ClosedDay.objects.all().order_by("-date")
+    result = []
+    for cd in closed_days:
+        sales_qs = DailySale.objects.select_related("product__category").filter(closed_day=cd)
+        total_cost = float(
+            sales_qs.aggregate(t=Sum(F("quantity") * F("product__purchase_price")))["t"] or 0
+        )
+        result.append({
+            "id": cd.id,
+            "date": str(cd.date),
+            "total_income": float(cd.total_income),
+            "total_profit": float(cd.total_profit),
+            "total_cost": round(float(cd.total_income) - float(cd.total_profit), 2),
+            "items_count": sales_qs.count(),
+        })
+
+    return json_response({"receipts": result})
+
+
+@csrf_exempt
+def receipt_detail(request, receipt_id):
+    """GET /api/v2/receipts/<id>/ — full receipt with all sold items"""
+    if request.method == "OPTIONS":
+        return json_response({})
+
+    user, err = require_auth(request)
+    if err:
+        return err
+
+    try:
+        cd = ClosedDay.objects.get(id=receipt_id)
+    except ClosedDay.DoesNotExist:
+        return json_response({"error": "Чек не найден"}, 404)
+
+    sales_qs = DailySale.objects.select_related("product__category").filter(closed_day=cd)
+
+    items = []
+    for s in sales_qs:
+        purchase_price = float(s.product.purchase_price)
+        sale_price = float(s.product.sale_price)
+        qty = s.quantity
+        items.append({
+            "id": s.id,
+            "product_id": s.product_id,
+            "product_name": s.product.name,
+            "category": s.product.category.name if s.product.category else "",
+            "quantity": qty,
+            "sale_price": sale_price,
+            "purchase_price": purchase_price,
+            "total_income": round(sale_price * qty, 2),
+            "total_cost": round(purchase_price * qty, 2),
+            "profit": round((sale_price - purchase_price) * qty, 2),
+        })
+
+    total_cost = round(float(cd.total_income) - float(cd.total_profit), 2)
+
+    return json_response({
+        "id": cd.id,
+        "date": str(cd.date),
+        "total_income": float(cd.total_income),
+        "total_profit": float(cd.total_profit),
+        "total_cost": total_cost,
+        "items": items,
+    })

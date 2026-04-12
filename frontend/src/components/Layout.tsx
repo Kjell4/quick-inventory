@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { LayoutDashboard, Package, ShoppingCart, User, LogOut, Menu, X, Briefcase } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, User, LogOut, Menu, X, Briefcase, ChevronDown, ChevronRight, ListChecks, PlusCircle, FileText } from 'lucide-react';
 import { cn } from './ui/Shared';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout, currentPage, navigateTo } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [productSectionOpen, setProductSectionOpen] = useState(
+    currentPage === 'products' || currentPage === 'add-product'
+  );
 
   if (!user) {
     return <div className="min-h-screen bg-gray-50">{children}</div>;
   }
+
+  const isManager = user.role?.toLowerCase() === 'manager';
+  const isProductPage = currentPage === 'products' || currentPage === 'add-product';
 
   const NavItem = ({ page, icon: Icon, label }: { page: string, icon: any, label: string }) => (
     <button
@@ -19,14 +25,64 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       }}
       className={cn(
         "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-        currentPage === page 
-          ? "bg-blue-50 text-blue-600 font-medium" 
+        currentPage === page
+          ? "bg-blue-50 text-blue-600 font-medium"
           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
       )}
     >
       <Icon size={20} />
       <span>{label}</span>
     </button>
+  );
+
+  const ProductSection = () => (
+    <div>
+      <button
+        onClick={() => setProductSectionOpen(prev => !prev)}
+        className={cn(
+          "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+          isProductPage
+            ? "bg-blue-50 text-blue-600 font-medium"
+            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        )}
+      >
+        <Package size={20} />
+        <span className="flex-1 text-left">Product Management</span>
+        {productSectionOpen
+          ? <ChevronDown size={16} className="flex-shrink-0" />
+          : <ChevronRight size={16} className="flex-shrink-0" />
+        }
+      </button>
+
+      {productSectionOpen && (
+        <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-100 pl-3">
+          <button
+            onClick={() => { navigateTo('products'); setIsMobileMenuOpen(false); }}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm",
+              currentPage === 'products'
+                ? "bg-blue-50 text-blue-600 font-medium"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+            )}
+          >
+            <ListChecks size={16} />
+            <span>Список товаров</span>
+          </button>
+          <button
+            onClick={() => { navigateTo('add-product'); setIsMobileMenuOpen(false); }}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm",
+              currentPage === 'add-product'
+                ? "bg-blue-50 text-blue-600 font-medium"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+            )}
+          >
+            <PlusCircle size={16} />
+            <span>Добавить товар</span>
+          </button>
+        </div>
+      )}
+    </div>
   );
 
   return (
@@ -42,13 +98,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <p className="text-xs text-gray-500 font-medium">MANAGEMENT SYSTEM</p>
           </div>
         </div>
-        
-        <nav className="flex-1 p-4 space-y-1">
+
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           <NavItem page="dashboard" icon={LayoutDashboard} label="Dashboard" />
-          {user.role === 'Manager' && (
-            <NavItem page="products" icon={Package} label="Products" />
-          )}
+          {isManager && <ProductSection />}
           <NavItem page="sales" icon={ShoppingCart} label="Daily Sales" />
+          {isManager && <NavItem page="receipts" icon={FileText} label="Receipts" />}
           <NavItem page="profile" icon={User} label="Profile" />
         </nav>
 
@@ -62,7 +117,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <p className="text-xs text-gray-500 truncate">{user.role}</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={logout}
             className="w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
           >
@@ -88,16 +143,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 bg-white z-20 pt-16 px-4 pb-4 flex flex-col">
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-2 overflow-y-auto">
             <NavItem page="dashboard" icon={LayoutDashboard} label="Dashboard" />
-            {user.role === 'Manager' && (
-              <NavItem page="products" icon={Package} label="Products" />
-            )}
+            {isManager && <ProductSection />}
             <NavItem page="sales" icon={ShoppingCart} label="Daily Sales" />
+            {isManager && <NavItem page="receipts" icon={FileText} label="Receipts" />}
             <NavItem page="profile" icon={User} label="Profile" />
           </nav>
           <div className="border-t border-gray-100 pt-4">
-            <button 
+            <button
               onClick={logout}
               className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"
             >

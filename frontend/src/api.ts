@@ -148,6 +148,12 @@ export const categoriesApi = {
   list: () => apiFetch('/categories/'),
 };
 
+// ─── Receipts (Closed Days) ─────────────────────────────────────
+export const receiptsApi = {
+  list: () => apiFetch('/receipts/'),
+  detail: (id: number) => apiFetch(`/receipts/${id}/`),
+};
+
 // ─── Barcode / QrBot API ──────────────────────────────────────────
 const DJANGO_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 

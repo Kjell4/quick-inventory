@@ -23,4 +23,8 @@ urlpatterns = [
 
     # Categories
     path('categories/',        rest_api.categories_list, name='rest_categories'),
+
+    # Receipts (closed days)
+    path('receipts/',                      rest_api.receipts_list,   name='rest_receipts'),
+    path('receipts/<int:receipt_id>/',     rest_api.receipt_detail,  name='rest_receipt_detail'),
 ]

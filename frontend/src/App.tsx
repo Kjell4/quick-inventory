@@ -3,9 +3,10 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Layout } from './components/Layout';
 import { LoginPage, SignupPage } from './components/Auth';
 import { Dashboard } from './components/Dashboard';
-import { ProductManagement } from './components/ProductManagement';
+import { ProductList, AddProductPage } from './components/ProductManagement';
 import { DailySales } from './components/DailySales';
 import { ProfilePage } from './components/ProfilePage';
+import { Receipts } from './components/Receipts';
 
 const AppContent: React.FC = () => {
   const { currentPage, user, loading } = useApp();
@@ -29,8 +30,10 @@ const AppContent: React.FC = () => {
   return (
     <Layout>
       {currentPage === 'dashboard' && <Dashboard />}
-      {currentPage === 'products' && <ProductManagement />}
+      {currentPage === 'products' && <ProductList />}
+      {currentPage === 'add-product' && <AddProductPage />}
       {currentPage === 'sales' && <DailySales />}
+      {currentPage === 'receipts' && <Receipts />}
       {currentPage === 'profile' && <ProfilePage />}
     </Layout>
   );
