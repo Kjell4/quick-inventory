@@ -18,23 +18,23 @@ export const Dashboard: React.FC = () => {
   const lowStockProducts = dashboardStats?.low_stock_count ?? products.filter(p => p.stock < 10).length;
 
   const stats = [
-    { label: 'Доход (месяц)', value: `${totalIncome.toFixed(0)} ₸`, icon: DollarSign, color: 'bg-green-100 text-green-600', trend: '' },
-    { label: 'Расходы (месяц)', value: `${totalExpenses.toFixed(0)} ₸`, icon: TrendingDown, color: 'bg-red-100 text-red-600', trend: '' },
-    { label: 'Прибыль (месяц)', value: `${totalProfit.toFixed(0)} ₸`, icon: TrendingUp, color: 'bg-blue-100 text-blue-600', trend: '' },
-    { label: 'Мало на складе', value: lowStockProducts, icon: Package, color: 'bg-orange-100 text-orange-600', trend: 'Нужно пополнить' },
+    { label: 'Revenue (month)', value: `${totalIncome.toFixed(0)} ₸`, icon: DollarSign, color: 'bg-green-100 text-green-600', trend: '' },
+    { label: 'Expenses (month)', value: `${totalExpenses.toFixed(0)} ₸`, icon: TrendingDown, color: 'bg-red-100 text-red-600', trend: '' },
+    { label: 'Profit (month)', value: `${totalProfit.toFixed(0)} ₸`, icon: TrendingUp, color: 'bg-blue-100 text-blue-600', trend: '' },
+    { label: 'Low Stock', value: lowStockProducts, icon: Package, color: 'bg-orange-100 text-orange-600', trend: 'Needs restocking' },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Дашборд</h1>
-          <p className="text-gray-500">Обзор показателей бизнеса</p>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500">Business performance overview</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={fetchDashboard}><RefreshCw size={16} /> Обновить</Button>
-          <Button variant="secondary" onClick={() => navigateTo('products')}>Товары</Button>
-          <Button onClick={() => navigateTo('sales')}>Новая продажа</Button>
+          <Button variant="secondary" onClick={fetchDashboard}><RefreshCw size={16} /> Refresh</Button>
+          <Button variant="secondary" onClick={() => navigateTo('products')}>Products</Button>
+          <Button onClick={() => navigateTo('sales')}>New Sale</Button>
         </div>
       </div>
 
@@ -58,17 +58,17 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Последние продажи</h3>
-            <Button variant="ghost" size="sm" onClick={() => navigateTo('sales')}>Все продажи</Button>
+            <h3 className="text-lg font-bold text-gray-900">Recent Sales</h3>
+            <Button variant="ghost" size="sm" onClick={() => navigateTo('sales')}>All Sales</Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-gray-100 text-sm text-gray-500">
-                  <th className="pb-3 font-medium">Товар</th>
-                  <th className="pb-3 font-medium">Кол-во</th>
-                  <th className="pb-3 font-medium">Дата</th>
-                  <th className="pb-3 font-medium text-right">Сумма</th>
+                  <th className="pb-3 font-medium">Product</th>
+                  <th className="pb-3 font-medium">Qty</th>
+                  <th className="pb-3 font-medium">Date</th>
+                  <th className="pb-3 font-medium text-right">Amount</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -76,12 +76,12 @@ export const Dashboard: React.FC = () => {
                   <tr key={sale.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                     <td className="py-3 text-gray-900 font-medium">{sale.productName}</td>
                     <td className="py-3 text-gray-600">{sale.quantity}</td>
-                    <td className="py-3 text-gray-500">{new Date(sale.date).toLocaleDateString('ru-RU')}</td>
+                    <td className="py-3 text-gray-500">{new Date(sale.date).toLocaleDateString('en-US')}</td>
                     <td className="py-3 text-gray-900 font-medium text-right">{sale.total.toFixed(0)} ₸</td>
                   </tr>
                 ))}
                 {sales.length === 0 && (
-                  <tr><td colSpan={4} className="py-8 text-center text-gray-500">Продаж ещё нет.</td></tr>
+                  <tr><td colSpan={4} className="py-8 text-center text-gray-500">No sales yet.</td></tr>
                 )}
               </tbody>
             </table>
@@ -89,12 +89,12 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         <Card className="p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Быстрые действия</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
             {[
-              { label: 'Записать продажу', icon: DollarSign, color: 'bg-blue-100 text-blue-600', page: 'sales' },
-              { label: 'Добавить товар', icon: Package, color: 'bg-purple-100 text-purple-600', page: 'products' },
-              { label: 'Закрыть день', icon: Calendar, color: 'bg-green-100 text-green-600', page: 'sales' },
+              { label: 'Record Sale', icon: DollarSign, color: 'bg-blue-100 text-blue-600', page: 'sales' },
+              { label: 'Add Product', icon: Package, color: 'bg-purple-100 text-purple-600', page: 'add-product' },
+              { label: 'Close Day', icon: Calendar, color: 'bg-green-100 text-green-600', page: 'sales' },
             ].map(action => (
               <button key={action.label} onClick={() => navigateTo(action.page)}
                 className="w-full text-left p-3 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all group">

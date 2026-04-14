@@ -1,6 +1,6 @@
 /**
- * api.ts — HTTP-клиент для Quick Inventory Django бэкенда
- * Базовый URL задаётся через REACT_APP_API_URL (по умолчанию http://localhost:8000)
+ * api.ts — HTTP client for the Quick Inventory Django backend
+ * Base URL is set via REACT_APP_API_URL (default: http://localhost:8000)
  */
 
 const BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:8000') + '/api/v2';
@@ -40,7 +40,7 @@ async function apiFetch(
     headers,
   });
 
-  // Попробовать обновить токен если 401
+  // Try to refresh token if 401
   if (res.status === 401 && authenticated) {
     const refresh = TokenStorage.getRefresh();
     if (refresh) {
@@ -52,13 +52,13 @@ async function apiFetch(
       if (refreshRes.ok) {
         const { access } = await refreshRes.json();
         TokenStorage.setTokens(access, refresh);
-        // Повторить запрос с новым токеном
+        // Retry the request with the new token
         headers['Authorization'] = `Bearer ${access}`;
         const retryRes = await fetch(`${BASE_URL}${path}`, { ...options, headers });
         return retryRes.json();
       }
     }
-    // refresh не сработал — сбросить сессию
+    // Refresh failed — reset session
     TokenStorage.clear();
     window.location.reload();
     throw new Error('Session expired');
@@ -168,11 +168,11 @@ export const analyticsApi = {
 const DJANGO_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 export const barcodeApi = {
-  /** GET /api/scans/ — список всех сканов (QrBot накапливает в памяти) */
+  /** GET /api/scans/ — list of all scans (QrBot accumulates in memory) */
   getScans: (): Promise<{ scans: { content: string; format: string }[]; total: number }> =>
     fetch(`${DJANGO_BASE}/api/scans/`).then(r => r.json()),
 
-  /** GET /api/barcode/lookup/?code=XXX — найти товар по баркоду */
+  /** GET /api/barcode/lookup/?code=XXX — find product by barcode */
   lookup: (code: string): Promise<{
     found: boolean;
     product?: {
@@ -183,7 +183,7 @@ export const barcodeApi = {
   }> =>
     fetch(`${DJANGO_BASE}/api/barcode/lookup/?code=${encodeURIComponent(code)}`).then(r => r.json()),
 
-  /** POST /api/scans/sell/ — продать товар по баркоду (QrBot-совместимый эндпоинт) */
+  /** POST /api/scans/sell/ — sell product by barcode (QrBot-compatible endpoint) */
   sell: (barcode: string, quantity: number): Promise<{
     success: boolean; product?: string; remaining?: number; total_price?: number; error?: string;
   }> =>

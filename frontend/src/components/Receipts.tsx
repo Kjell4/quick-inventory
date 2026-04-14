@@ -40,17 +40,17 @@ interface ReceiptDetail {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────
-const fmt = (n: number) => n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' ₸';
+const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' KZT';
 const fmtFull = fmt; // alias used inside PDF generator
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
-  return d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 };
 
 const formatDateShort = (iso: string) => {
   const d = new Date(iso);
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
 // ─── Load only jsPDF (no plugins needed) ────────────────────────
@@ -64,9 +64,9 @@ function loadJsPDF(): Promise<void> {
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
     s.onload = () => {
       if ((window as any).jspdf?.jsPDF) resolve();
-      else { jspdfPromise = null; reject(new Error('jsPDF не загрузился')); }
+      else { jspdfPromise = null; reject(new Error('jsPDF failed to load')); }
     };
-    s.onerror = () => { jspdfPromise = null; reject(new Error('Ошибка загрузки jsPDF')); };
+    s.onerror = () => { jspdfPromise = null; reject(new Error('Error loading jsPDF')); };
     document.head.appendChild(s);
   });
   return jspdfPromise;
@@ -174,7 +174,7 @@ function generatePDF(receipt: ReceiptDetail) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(180, 210, 255);
-  doc.text('ОТЧЕТ ЗА ДЕНЬ', M, 21);
+  doc.text('DAILY REPORT', M, 21);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
@@ -184,7 +184,7 @@ function generatePDF(receipt: ReceiptDetail) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(180, 210, 255);
-  doc.text('Чек #' + receipt.id, W - M, 21, { align: 'right' });
+  doc.text('Receipt #' + receipt.id, W - M, 21, { align: 'right' });
 
   // ── Summary boxes ───────────────────────────────────────────────
   const boxY = 40;
@@ -192,9 +192,9 @@ function generatePDF(receipt: ReceiptDetail) {
   const boxW = (W - M * 2 - 8) / 3;
 
   const boxes: Array<{ label: string; value: string; bg: [number,number,number]; fg: [number,number,number] }> = [
-    { label: 'ВЫРУЧКА', value: fmtFull(receipt.total_income),  bg: [235,242,255], fg: [37,99,235]  },
-    { label: 'РАСХОДЫ', value: fmtFull(receipt.total_cost),    bg: [255,241,241], fg: [220,38,38]  },
-    { label: 'ПРИБЫЛЬ', value: fmtFull(receipt.total_profit),  bg: [236,253,245], fg: [22,163,74]  },
+    { label: 'REVENUE', value: fmtFull(receipt.total_income),  bg: [235,242,255], fg: [37,99,235]  },
+    { label: 'EXPENSES', value: fmtFull(receipt.total_cost),    bg: [255,241,241], fg: [220,38,38]  },
+    { label: 'PROFIT', value: fmtFull(receipt.total_profit),  bg: [236,253,245], fg: [22,163,74]  },
   ];
 
   boxes.forEach((b, i) => {
@@ -216,18 +216,18 @@ function generatePDF(receipt: ReceiptDetail) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(30, 30, 50);
-  doc.text('Проданные товары — ' + receipt.items.length + ' позиций', M, y);
+  doc.text('Sold Products — ' + receipt.items.length + ' items', M, y);
   y += 4;
 
   // ── Table ───────────────────────────────────────────────────────
   const cols: ColDef[] = [
-    { header: 'Товар',      width: 50, align: 'left'   },
-    { header: 'Категория',  width: 28, align: 'left'   },
-    { header: 'Кол.',       width: 12, align: 'center' },
-    { header: 'Цена',       width: 23, align: 'right'  },
-    { header: 'Выручка',    width: 23, align: 'right'  },
-    { header: 'Расход',     width: 22, align: 'right'  },
-    { header: 'Прибыль',    width: 24, align: 'right'  },
+    { header: 'Product',      width: 50, align: 'left'   },
+    { header: 'Category',  width: 28, align: 'left'   },
+    { header: 'Qty',       width: 12, align: 'center' },
+    { header: 'Price',       width: 23, align: 'right'  },
+    { header: 'Revenue',    width: 23, align: 'right'  },
+    { header: 'Cost',     width: 22, align: 'right'  },
+    { header: 'Profit',    width: 24, align: 'right'  },
   ];
 
   const tableRows = receipt.items.map(item => [
@@ -251,7 +251,7 @@ function generatePDF(receipt: ReceiptDetail) {
   doc.setFontSize(7.5);
 
   doc.setTextColor(50, 50, 70);
-  doc.text('Итого: ' + receipt.items.length + ' позиций', M + 2.5, finalY + 6);
+  doc.text('Total: ' + receipt.items.length + ' items', M + 2.5, finalY + 6);
 
   const colX = (idx: number) => M + cols.slice(0, idx).reduce((s, c) => s + c.width, 0);
 
@@ -270,14 +270,14 @@ function generatePDF(receipt: ReceiptDetail) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(22, 163, 74);
-    doc.text('Чистая прибыль: ' + fmtFull(receipt.total_profit), M + 5, summaryY + 9);
+    doc.text('Net Profit: ' + fmtFull(receipt.total_profit), M + 5, summaryY + 9);
     const pct = receipt.total_income > 0
       ? ((receipt.total_profit / receipt.total_income) * 100).toFixed(1) + '%'
       : '—';
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(80, 130, 100);
-    doc.text('Маржа: ' + pct, W - M - 5, summaryY + 9, { align: 'right' });
+    doc.text('Margin: ' + pct, W - M - 5, summaryY + 9, { align: 'right' });
   }
 
   // ── Page numbers ────────────────────────────────────────────────
@@ -288,7 +288,7 @@ function generatePDF(receipt: ReceiptDetail) {
     doc.setFontSize(6.5);
     doc.setTextColor(180, 180, 190);
     doc.text(
-      'Сформировано: ' + new Date().toLocaleString('ru-RU') + '   |   Стр. ' + i + ' из ' + pages,
+      'Generated: ' + new Date().toLocaleString('en-US') + '   |   Page ' + i + ' of ' + pages,
       W / 2, 292, { align: 'center' }
     );
   }
@@ -319,7 +319,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
       generatePDF(receipt);
     } catch (err) {
       console.error('PDF error:', err);
-      alert('Не удалось загрузить PDF библиотеку. Проверьте интернет-соединение.');
+      alert('Failed to load PDF library. Check your internet connection.');
     } finally {
       setPdfLoading(false);
     }
@@ -329,7 +329,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
     return (
       <div className="py-20 text-center text-gray-400">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        Загрузка чека...
+        Loading receipt...
       </div>
     );
   }
@@ -338,7 +338,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
     return (
       <div className="py-20 text-center text-gray-400">
         <AlertCircle className="mx-auto mb-2" size={32} />
-        Чек не найден
+        Receipt not found
       </div>
     );
   }
@@ -355,7 +355,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Чек #{receipt.id}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Receipt #{receipt.id}</h1>
             <p className="text-gray-500 text-sm capitalize">{formatDate(receipt.date)}</p>
           </div>
         </div>
@@ -365,7 +365,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
           className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
         >
           <Download size={16} />
-          {pdfLoading ? 'Генерация...' : 'Скачать PDF'}
+          {pdfLoading ? 'Generating...' : 'Download PDF'}
         </button>
       </div>
 
@@ -374,25 +374,25 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
         <Card className="p-5 flex items-center gap-4">
           <div className="p-3 bg-blue-100 rounded-xl"><DollarSign className="text-blue-600" size={22} /></div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Выручка</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Revenue</p>
             <p className="text-xl font-bold text-gray-900">{fmt(receipt.total_income)}</p>
           </div>
         </Card>
         <Card className="p-5 flex items-center gap-4">
           <div className="p-3 bg-red-100 rounded-xl"><TrendingDown className="text-red-500" size={22} /></div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Расходы</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Expenses</p>
             <p className="text-xl font-bold text-gray-900">{fmt(receipt.total_cost)}</p>
           </div>
         </Card>
         <Card className="p-5 flex items-center gap-4">
           <div className="p-3 bg-green-100 rounded-xl"><TrendingUp className="text-green-600" size={22} /></div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Прибыль</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Profit</p>
             <p className="text-xl font-bold text-green-600">{fmt(receipt.total_profit)}</p>
             {receipt.total_income > 0 && (
               <p className="text-xs text-gray-400">
-                маржа {((receipt.total_profit / receipt.total_income) * 100).toFixed(1)}%
+                margin {((receipt.total_profit / receipt.total_income) * 100).toFixed(1)}%
               </p>
             )}
           </div>
@@ -402,19 +402,19 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
       {/* Items table */}
       <Card className="p-6">
         <h2 className="text-base font-bold text-gray-900 mb-4">
-          Проданные товары <span className="text-gray-400 font-normal">({receipt.items.length} позиций)</span>
+          Sold Products <span className="text-gray-400 font-normal">({receipt.items.length} items)</span>
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-gray-100 text-xs text-gray-500 bg-gray-50 uppercase tracking-wide">
-                <th className="px-3 py-3 font-medium rounded-l-lg">Товар</th>
-                <th className="px-3 py-3 font-medium">Категория</th>
-                <th className="px-3 py-3 font-medium text-center">Кол-во</th>
-                <th className="px-3 py-3 font-medium text-right">Цена</th>
-                <th className="px-3 py-3 font-medium text-right">Выручка</th>
-                <th className="px-3 py-3 font-medium text-right">Расход</th>
-                <th className="px-3 py-3 font-medium text-right rounded-r-lg">Прибыль</th>
+                <th className="px-3 py-3 font-medium rounded-l-lg">Product</th>
+                <th className="px-3 py-3 font-medium">Category</th>
+                <th className="px-3 py-3 font-medium text-center">Qty</th>
+                <th className="px-3 py-3 font-medium text-right">Price</th>
+                <th className="px-3 py-3 font-medium text-right">Revenue</th>
+                <th className="px-3 py-3 font-medium text-right">Cost</th>
+                <th className="px-3 py-3 font-medium text-right rounded-r-lg">Profit</th>
               </tr>
             </thead>
             <tbody>
@@ -437,7 +437,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
             <tfoot>
               <tr className="border-t-2 border-gray-200 bg-gray-50">
                 <td className="px-3 py-3 font-bold text-gray-900" colSpan={4}>
-                  Итого ({receipt.items.length} поз.)
+                  Total ({receipt.items.length} items)
                 </td>
                 <td className="px-3 py-3 text-right font-bold text-blue-600">{fmt(receipt.total_income)}</td>
                 <td className="px-3 py-3 text-right font-bold text-red-500">{fmt(receipt.total_cost)}</td>
@@ -467,21 +467,21 @@ const ReceiptsListView: React.FC<{ onSelect: (id: number) => void }> = ({ onSele
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Receipts</h1>
-        <p className="text-gray-500">История закрытых дней и выручки</p>
+        <p className="text-gray-500">History of closed days and revenue</p>
       </div>
 
       {loading ? (
         <div className="py-20 text-center text-gray-400">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          Загрузка...
+          Loading...
         </div>
       ) : receipts.length === 0 ? (
         <Card className="p-12 text-center">
           <div className="bg-gray-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
             <Receipt className="text-gray-400" size={28} />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-1">Нет закрытых дней</h3>
-          <p className="text-gray-400 text-sm">Закрытые дни появятся здесь после нажатия «Закрыть день» в разделе продаж</p>
+          <h3 className="text-lg font-semibold text-gray-700 mb-1">No closed days</h3>
+          <p className="text-gray-400 text-sm">Closed days will appear here after pressing "Close Day" in the sales section</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -503,22 +503,22 @@ const ReceiptsListView: React.FC<{ onSelect: (id: number) => void }> = ({ onSele
                       <p className="font-semibold text-gray-900 capitalize">{formatDateShort(r.date)}</p>
                       <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                         <ShoppingBag size={11} />
-                        {r.items_count} позиций продано
+                        {r.items_count} items sold
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-6 sm:gap-10">
                     <div className="text-right hidden sm:block">
-                      <p className="text-xs text-gray-400">Выручка</p>
+                      <p className="text-xs text-gray-400">Revenue</p>
                       <p className="font-semibold text-blue-600">{fmt(r.total_income)}</p>
                     </div>
                     <div className="text-right hidden sm:block">
-                      <p className="text-xs text-gray-400">Расходы</p>
+                      <p className="text-xs text-gray-400">Expenses</p>
                       <p className="font-semibold text-red-500">{fmt(r.total_cost)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-400">Прибыль</p>
+                      <p className="text-xs text-gray-400">Profit</p>
                       <p className={`font-bold ${r.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {fmt(r.total_profit)}
                       </p>

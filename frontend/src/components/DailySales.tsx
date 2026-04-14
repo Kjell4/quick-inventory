@@ -74,10 +74,10 @@ export const DailySales: React.FC = () => {
         setScanInput('');
         scanInputRef.current?.focus();
       } else {
-        setScanStatus({ type: 'error', message: `Товар «${code}» не найден в базе` });
+        setScanStatus({ type: 'error', message: `Product "${code}" not found in database` });
       }
     } catch {
-      setScanStatus({ type: 'error', message: 'Ошибка подключения к серверу' });
+      setScanStatus({ type: 'error', message: 'Server connection error' });
     }
   }, []);
 
@@ -112,14 +112,14 @@ export const DailySales: React.FC = () => {
       const item = cart[key];
       try {
         const res = await barcodeApi.sell(item.barcode, item.quantity);
-        if (!res.success) errors.push(`${item.name}: ${res.error || 'ошибка'}`);
-      } catch { errors.push(`${item.name}: ошибка сети`); }
+        if (!res.success) errors.push(`${item.name}: ${res.error || 'error'}`);
+      } catch { errors.push(`${item.name}: network error`); }
     }
     if (errors.length > 0) {
       setScanStatus({ type: 'error', message: errors.join(' | ') });
     } else {
       setCart({});
-      setConfirmMsg('Продажа сохранена!');
+      setConfirmMsg('Sale saved!');
       fetchSales(); fetchProducts();
       setTimeout(() => setConfirmMsg(''), 3000);
     }
@@ -127,9 +127,9 @@ export const DailySales: React.FC = () => {
   };
 
   const handleCloseDay = async () => {
-    if (!window.confirm('Закрыть день? Все продажи будут зафиксированы.')) return;
+    if (!window.confirm('Close the day? All sales will be finalized.')) return;
     setClosingDay(true);
-    try { await closeDay(); setConfirmMsg('День закрыт!'); setTimeout(() => setConfirmMsg(''), 3000); }
+    try { await closeDay(); setConfirmMsg('Day closed!'); setTimeout(() => setConfirmMsg(''), 3000); }
     catch (err: any) { setScanStatus({ type: 'error', message: err.message }); }
     finally { setClosingDay(false); }
   };
@@ -143,28 +143,28 @@ export const DailySales: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Заголовок */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Ежедневные продажи</h1>
-          <p className="text-gray-500">Сканируй баркод или выбирай товар вручную</p>
+          <h1 className="text-2xl font-bold text-gray-900">Daily Sales</h1>
+          <p className="text-gray-500">Scan a barcode or select a product manually</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="secondary" onClick={() => { fetchSales(); fetchProducts(); }}><RefreshCw size={16} /></Button>
           <div className="bg-green-100 px-4 py-2 rounded-lg border border-green-200">
-            <span className="text-xs text-green-800 font-bold uppercase tracking-wider">Выручка сегодня</span>
+            <span className="text-xs text-green-800 font-bold uppercase tracking-wider">Today's Revenue</span>
             <div className="text-xl font-bold text-green-700">{dailyTotal.toFixed(0)} ₸</div>
           </div>
         </div>
       </div>
 
-      {/* Сканер + корзина */}
+      {/* Scanner + Cart */}
       <Card className="p-6 border-t-4 border-t-blue-600">
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Camera size={20} className="text-blue-600" /> Сканер баркода
+          <Camera size={20} className="text-blue-600" /> Barcode Scanner
         </h3>
 
-        {/* Поле ввода */}
+        {/* Input field */}
         <div className="flex gap-2 mb-3">
           <input
             ref={scanInputRef}
@@ -172,14 +172,14 @@ export const DailySales: React.FC = () => {
             value={scanInput}
             onChange={e => handleManualInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Отсканируй баркод или введи вручную..."
+            placeholder="Scan barcode or enter manually..."
             autoComplete="off"
             className="flex-1 px-4 py-3 border-2 border-blue-400 rounded-lg text-base focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20"
           />
           <button
             type="button"
             onClick={() => { setPollActive(v => !v); scanInputRef.current?.focus(); }}
-            title={pollActive ? 'Остановить QrBot' : 'Ждать скан из QrBot'}
+            title={pollActive ? 'Stop QrBot' : 'Wait for QrBot scan'}
             className={`px-4 py-3 rounded-lg text-xl border-2 transition-all ${
               pollActive ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-gray-300 text-gray-600 hover:border-green-400'
             }`}
@@ -188,32 +188,32 @@ export const DailySales: React.FC = () => {
           </button>
         </div>
 
-        {/* Подсказка QrBot */}
+        {/* QrBot hint */}
         {pollActive && (
           <div className="mb-3 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-            ⏳ Жду сканирование из QrBot… Нажми 📷 ещё раз чтобы остановить
+            ⏳ Waiting for QrBot scan… Press 📷 again to stop
           </div>
         )}
 
-        {/* Статус */}
+        {/* Status */}
         {scanStatus.type !== 'idle' && (
           <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2 border ${statusBg}`}>
-            {scanStatus.type === 'waiting' && <><span>⏳</span> Ищу товар...</>}
-            {scanStatus.type === 'found'   && <><CheckCircle size={16} /> Добавлено: <strong>{scanStatus.name}</strong></>}
+            {scanStatus.type === 'waiting' && <><span>⏳</span> Looking up product...</>}
+            {scanStatus.type === 'found'   && <><CheckCircle size={16} /> Added: <strong>{scanStatus.name}</strong></>}
             {scanStatus.type === 'error'   && <><X size={16} /> {scanStatus.message}</>}
           </div>
         )}
 
-        {/* Корзина */}
+        {/* Cart */}
         <div className="overflow-x-auto mb-4">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-blue-600 text-white">
-                <th className="px-3 py-2 text-left rounded-tl-lg">Товар</th>
-                <th className="px-3 py-2 text-left">Баркод</th>
-                <th className="px-3 py-2 text-right">Цена</th>
-                <th className="px-3 py-2 text-center" style={{ width: 100 }}>Кол-во</th>
-                <th className="px-3 py-2 text-right">Сумма</th>
+                <th className="px-3 py-2 text-left rounded-tl-lg">Product</th>
+                <th className="px-3 py-2 text-left">Barcode</th>
+                <th className="px-3 py-2 text-right">Price</th>
+                <th className="px-3 py-2 text-center" style={{ width: 100 }}>Qty</th>
+                <th className="px-3 py-2 text-right">Total</th>
                 <th className="px-3 py-2 rounded-tr-lg"></th>
               </tr>
             </thead>
@@ -222,7 +222,7 @@ export const DailySales: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-gray-400">
                     <ShoppingCart size={36} className="opacity-20 mx-auto mb-2" />
-                    Отсканируй товар — он появится здесь
+                    Scan a product — it will appear here
                   </td>
                 </tr>
               ) : cartKeys.map(key => {
@@ -248,9 +248,9 @@ export const DailySales: React.FC = () => {
           </table>
         </div>
 
-        {/* Итого */}
+        {/* Total */}
         <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 mb-4 flex justify-between items-center">
-          <span className="text-gray-700 font-medium">Итого к оплате:</span>
+          <span className="text-gray-700 font-medium">Total to pay:</span>
           <span className="text-2xl font-bold text-blue-600">{cartTotal.toFixed(0)} ₸</span>
         </div>
 
@@ -261,7 +261,7 @@ export const DailySales: React.FC = () => {
             cartKeys.length === 0 || confirming ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 active:scale-95'
           }`}
         >
-          {confirming ? '⏳ Сохраняем...' : '✓ Подтвердить продажу'}
+          {confirming ? '⏳ Saving...' : '✓ Confirm Sale'}
         </button>
 
         {confirmMsg && (
@@ -272,22 +272,22 @@ export const DailySales: React.FC = () => {
         )}
       </Card>
 
-      {/* Список продаж за день */}
+      {/* Today's sales list */}
       <Card className="p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold text-gray-900">Продажи за сегодня</h3>
+          <h3 className="text-lg font-bold text-gray-900">Today's Sales</h3>
         </div>
         {salesLoading ? (
-          <div className="py-12 text-center text-gray-400">Загрузка...</div>
+          <div className="py-12 text-center text-gray-400">Loading...</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
                 <tr className="border-b border-gray-100 text-gray-500">
-                  <th className="pb-3 font-medium">Товар</th>
-                  <th className="pb-3 font-medium text-center">Кол-во</th>
-                  <th className="pb-3 font-medium text-right">Сумма</th>
-                  {isManager && <th className="pb-3 font-medium text-right">Действия</th>}
+                  <th className="pb-3 font-medium">Product</th>
+                  <th className="pb-3 font-medium text-center">Qty</th>
+                  <th className="pb-3 font-medium text-right">Amount</th>
+                  {isManager && <th className="pb-3 font-medium text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -298,7 +298,7 @@ export const DailySales: React.FC = () => {
                     <td className="py-3 font-bold text-gray-900 text-right">{sale.total.toFixed(0)} ₸</td>
                     {isManager && (
                       <td className="py-3 text-right">
-                        <button onClick={() => { if (window.confirm('Отменить эту продажу?')) deleteSale(sale.id); }}
+                        <button onClick={() => { if (window.confirm('Cancel this sale?')) deleteSale(sale.id); }}
                           className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded">
                           <Trash2 size={15} />
                         </button>
@@ -307,7 +307,7 @@ export const DailySales: React.FC = () => {
                   </tr>
                 ))}
                 {sales.length === 0 && (
-                  <tr><td colSpan={isManager ? 4 : 3} className="py-10 text-center text-gray-400">Продаж сегодня ещё нет.</td></tr>
+                  <tr><td colSpan={isManager ? 4 : 3} className="py-10 text-center text-gray-400">No sales today yet.</td></tr>
                 )}
               </tbody>
             </table>
@@ -315,7 +315,7 @@ export const DailySales: React.FC = () => {
         )}
         {isManager && sales.length > 0 && (
           <div className="mt-6 pt-6 border-t border-gray-100 flex justify-end">
-            <Button variant="danger" onClick={handleCloseDay} isLoading={closingDay}>Закрыть день</Button>
+            <Button variant="danger" onClick={handleCloseDay} isLoading={closingDay}>Close Day</Button>
           </div>
         )}
       </Card>

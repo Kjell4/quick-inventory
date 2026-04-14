@@ -31,8 +31,8 @@ interface AnalyticsData {
 
 // ─── Constants ──────────────────────────────────────────────────
 const MONTH_NAMES = [
-  'Январь','Февраль','Март','Апрель','Май','Июнь',
-  'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь',
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December',
 ];
 
 const PALETTE = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a'];
@@ -45,14 +45,14 @@ const fmt = (n: number) =>
     : n.toFixed(0) + ' ₸';
 
 const fmtFull = (n: number) =>
-  n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' ₸';
+  n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' ₸';
 
 // ─── Custom Tooltip for Area chart ──────────────────────────────
 const AreaTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-sm min-w-[160px]">
-      <p className="font-semibold text-gray-700 mb-2">День {label}</p>
+      <p className="font-semibold text-gray-700 mb-2">Day {label}</p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex justify-between gap-4">
           <span style={{ color: p.color }} className="font-medium">{p.name}</span>
@@ -73,7 +73,7 @@ const BarTooltip = ({ active, payload, label }: any) => {
         <div key={p.dataKey} className="flex justify-between gap-4">
           <span style={{ color: p.color }} className="font-medium">{p.name}</span>
           <span className="font-semibold text-gray-800">
-            {p.dataKey === 'qty' ? p.value + ' шт.' : fmtFull(p.value)}
+            {p.dataKey === 'qty' ? p.value + ' pcs.' : fmtFull(p.value)}
           </span>
         </div>
       ))}
@@ -110,9 +110,9 @@ const renderActiveShape = (props: any) => {
 const SummaryCards: React.FC<{ summary: Summary }> = ({ summary }) => (
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
     {[
-      { label: 'Выручка за месяц', value: summary.total_income,  icon: DollarSign,  bg: 'bg-blue-50',  iconBg: 'bg-blue-100',  iconColor: 'text-blue-600',  textColor: 'text-blue-700' },
-      { label: 'Расходы за месяц', value: summary.total_cost,    icon: TrendingDown, bg: 'bg-red-50',   iconBg: 'bg-red-100',   iconColor: 'text-red-500',   textColor: 'text-red-600'  },
-      { label: 'Прибыль за месяц', value: summary.total_profit,  icon: TrendingUp,  bg: 'bg-green-50', iconBg: 'bg-green-100', iconColor: 'text-green-600', textColor: 'text-green-700'},
+      { label: 'Monthly Revenue', value: summary.total_income,  icon: DollarSign,  bg: 'bg-blue-50',  iconBg: 'bg-blue-100',  iconColor: 'text-blue-600',  textColor: 'text-blue-700' },
+      { label: 'Monthly Expenses', value: summary.total_cost,    icon: TrendingDown, bg: 'bg-red-50',   iconBg: 'bg-red-100',   iconColor: 'text-red-500',   textColor: 'text-red-600'  },
+      { label: 'Monthly Profit', value: summary.total_profit,  icon: TrendingUp,  bg: 'bg-green-50', iconBg: 'bg-green-100', iconColor: 'text-green-600', textColor: 'text-green-700'},
     ].map(c => (
       <Card key={c.label} className={`p-5 ${c.bg} border-0`}>
         <div className="flex items-center gap-4">
@@ -137,12 +137,12 @@ const DailyChart: React.FC<{ data: DayData[] }> = ({ data }) => {
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-1">
         <TrendingUp className="text-blue-600" size={18} />
-        <h3 className="font-bold text-gray-900">Доходы и расходы по дням</h3>
+        <h3 className="font-bold text-gray-900">Daily Income and Expenses</h3>
       </div>
-      <p className="text-xs text-gray-400 mb-5">Выручка, себестоимость и прибыль за каждый день месяца</p>
+      <p className="text-xs text-gray-400 mb-5">Revenue, cost and profit for each day of the month</p>
 
       {!hasData ? (
-        <div className="h-64 flex items-center justify-center text-gray-400 text-sm">Нет данных за этот месяц</div>
+        <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No data for this month</div>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
@@ -178,9 +178,9 @@ const DailyChart: React.FC<{ data: DayData[] }> = ({ data }) => {
               iconType="circle" iconSize={8}
               wrapperStyle={{ fontSize: 12, paddingTop: 16 }}
             />
-            <Area type="monotone" dataKey="income"  name="Выручка"     stroke="#2563eb" strokeWidth={2} fill="url(#gradIncome)"  dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
-            <Area type="monotone" dataKey="cost"    name="Себестоимость" stroke="#ef4444" strokeWidth={2} fill="url(#gradCost)"    dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
-            <Area type="monotone" dataKey="profit"  name="Прибыль"     stroke="#16a34a" strokeWidth={2} fill="url(#gradProfit)"  dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+            <Area type="monotone" dataKey="income"  name="Revenue"     stroke="#2563eb" strokeWidth={2} fill="url(#gradIncome)"  dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+            <Area type="monotone" dataKey="cost"    name="Cost" stroke="#ef4444" strokeWidth={2} fill="url(#gradCost)"    dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+            <Area type="monotone" dataKey="profit"  name="Profit"     stroke="#16a34a" strokeWidth={2} fill="url(#gradProfit)"  dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
           </AreaChart>
         </ResponsiveContainer>
       )}
@@ -196,9 +196,9 @@ const TopCategoriesChart: React.FC<{ data: CatData[] }> = ({ data }) => {
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-1">
         <BarChart2 className="text-purple-600" size={18} />
-        <h3 className="font-bold text-gray-900">Топ-5 категорий</h3>
+        <h3 className="font-bold text-gray-900">Top 5 Categories</h3>
       </div>
-      <div className="h-64 flex items-center justify-center text-gray-400 text-sm">Нет данных</div>
+      <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No data</div>
     </Card>
   );
 
@@ -206,9 +206,9 @@ const TopCategoriesChart: React.FC<{ data: CatData[] }> = ({ data }) => {
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-1">
         <BarChart2 className="text-purple-600" size={18} />
-        <h3 className="font-bold text-gray-900">Топ-5 категорий</h3>
+        <h3 className="font-bold text-gray-900">Top 5 Categories</h3>
       </div>
-      <p className="text-xs text-gray-400 mb-4">По выручке за месяц · нажми на сектор</p>
+      <p className="text-xs text-gray-400 mb-4">By monthly revenue · hover over a sector</p>
 
       <div className="flex flex-col lg:flex-row items-center gap-4">
         <ResponsiveContainer width="100%" height={240}>
@@ -244,7 +244,7 @@ const TopCategoriesChart: React.FC<{ data: CatData[] }> = ({ data }) => {
                 <p className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 leading-tight">
                   {cat.name}
                 </p>
-                <p className="text-xs text-gray-400">{cat.qty} шт.</p>
+                <p className="text-xs text-gray-400">{cat.qty} pcs.</p>
               </div>
             </button>
           ))}
@@ -260,9 +260,9 @@ const TopProductsChart: React.FC<{ data: ProdData[] }> = ({ data }) => {
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-1">
         <ShoppingCart className="text-orange-500" size={18} />
-        <h3 className="font-bold text-gray-900">Топ-5 товаров</h3>
+        <h3 className="font-bold text-gray-900">Top 5 Products</h3>
       </div>
-      <div className="h-64 flex items-center justify-center text-gray-400 text-sm">Нет данных</div>
+      <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No data</div>
     </Card>
   );
 
@@ -275,9 +275,9 @@ const TopProductsChart: React.FC<{ data: ProdData[] }> = ({ data }) => {
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-1">
         <ShoppingCart className="text-orange-500" size={18} />
-        <h3 className="font-bold text-gray-900">Топ-5 товаров</h3>
+        <h3 className="font-bold text-gray-900">Top 5 Products</h3>
       </div>
-      <p className="text-xs text-gray-400 mb-5">По количеству продаж за месяц</p>
+      <p className="text-xs text-gray-400 mb-5">By number of sales this month</p>
 
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={truncated} margin={{ top: 5, right: 10, left: 10, bottom: 5 }} barSize={32}>
@@ -293,7 +293,7 @@ const TopProductsChart: React.FC<{ data: ProdData[] }> = ({ data }) => {
             allowDecimals={false}
           />
           <Tooltip content={<BarTooltip />} cursor={{ fill: '#f5f5ff' }} />
-          <Bar dataKey="qty" name="Продано" radius={[6, 6, 0, 0]}>
+          <Bar dataKey="qty" name="Sold" radius={[6, 6, 0, 0]}>
             {truncated.map((_, i) => (
               <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
             ))}
@@ -312,7 +312,7 @@ const TopProductsChart: React.FC<{ data: ProdData[] }> = ({ data }) => {
               {i + 1}
             </span>
             <span className="flex-1 text-sm text-gray-700 truncate">{p.name}</span>
-            <span className="text-sm font-semibold text-gray-900">{p.qty} шт.</span>
+            <span className="text-sm font-semibold text-gray-900">{p.qty} pcs.</span>
             <span className="text-sm text-blue-600 font-medium w-24 text-right">{fmtFull(p.revenue)}</span>
           </div>
         ))}
@@ -326,33 +326,33 @@ const LowStockTable: React.FC<{ data: LowStock[] }> = ({ data }) => (
   <Card className="p-6">
     <div className="flex items-center gap-2 mb-1">
       <AlertTriangle className="text-amber-500" size={18} />
-      <h3 className="font-bold text-gray-900">Товары для закупки</h3>
+      <h3 className="font-bold text-gray-900">Items to Restock</h3>
       {data.length > 0 && (
         <span className="ml-auto bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">
-          {data.length} позиций
+          {data.length} items
         </span>
       )}
     </div>
-    <p className="text-xs text-gray-400 mb-5">Остаток менее 10 единиц — требуют пополнения</p>
+    <p className="text-xs text-gray-400 mb-5">Less than 10 units remaining — needs restocking</p>
 
     {data.length === 0 ? (
       <div className="py-12 text-center">
         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
           <TrendingUp className="text-green-600" size={22} />
         </div>
-        <p className="text-gray-500 font-medium">Всё в порядке</p>
-        <p className="text-gray-400 text-sm mt-1">Нет товаров с низким остатком</p>
+        <p className="text-gray-500 font-medium">All good</p>
+        <p className="text-gray-400 text-sm mt-1">No low-stock products</p>
       </div>
     ) : (
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
-              <th className="pb-3 text-left font-medium">Товар</th>
-              <th className="pb-3 text-left font-medium">Категория</th>
-              <th className="pb-3 text-center font-medium">Остаток</th>
-              <th className="pb-3 text-right font-medium">Цена закупки</th>
-              <th className="pb-3 text-right font-medium">Статус</th>
+              <th className="pb-3 text-left font-medium">Product</th>
+              <th className="pb-3 text-left font-medium">Category</th>
+              <th className="pb-3 text-center font-medium">Stock</th>
+              <th className="pb-3 text-right font-medium">Purchase Price</th>
+              <th className="pb-3 text-right font-medium">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -376,17 +376,17 @@ const LowStockTable: React.FC<{ data: LowStock[] }> = ({ data }) => (
                   {p.quantity === 0 ? (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-lg">
                       <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                      Нет в наличии
+                      Out of stock
                     </span>
                   ) : p.quantity <= 3 ? (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
                       <span className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
-                      Срочно закупить
+                      Restock urgently
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">
                       <span className="w-1.5 h-1.5 bg-amber-500 rounded-full" />
-                      Закупить
+                      Restock
                     </span>
                   )}
                 </td>
@@ -452,7 +452,7 @@ export const Analytics: React.FC = () => {
     setError('');
     analyticsApi.get(y, m)
       .then((d: any) => setData(d))
-      .catch(() => setError('Не удалось загрузить аналитику'))
+      .catch(() => setError('Failed to load analytics'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -468,7 +468,7 @@ export const Analytics: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-gray-500 text-sm">Аналитика продаж и складских остатков</p>
+          <p className="text-gray-500 text-sm">Sales and inventory analytics</p>
         </div>
         <MonthPicker year={year} month={month} onChange={handleMonthChange} />
       </div>
@@ -476,7 +476,7 @@ export const Analytics: React.FC = () => {
       {loading ? (
         <div className="py-32 flex flex-col items-center justify-center text-gray-400 gap-4">
           <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm">Загрузка аналитики...</span>
+          <span className="text-sm">Loading analytics...</span>
         </div>
       ) : error ? (
         <Card className="p-12 text-center text-red-500">{error}</Card>

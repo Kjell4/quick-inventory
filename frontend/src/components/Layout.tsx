@@ -66,7 +66,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             )}
           >
             <ListChecks size={16} />
-            <span>Список товаров</span>
+            <span>Product List</span>
           </button>
           <button
             onClick={() => { navigateTo('add-product'); setIsMobileMenuOpen(false); }}
@@ -78,7 +78,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             )}
           >
             <PlusCircle size={16} />
-            <span>Добавить товар</span>
+            <span>Add Product</span>
           </button>
         </div>
       )}

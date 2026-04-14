@@ -17,7 +17,7 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Мой профиль</h1>
+      <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
 
       <Card className="p-8">
         <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
@@ -29,32 +29,32 @@ export const ProfilePage: React.FC = () => {
             <p className="text-gray-500">@{user.username}</p>
             <p className="text-gray-400 text-sm">{user.email}</p>
             <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-100 mt-2">
-              <Shield size={12} /> {user.role === 'manager' || user.role === 'Manager' ? 'Менеджер' : 'Продавец'}
+              <Shield size={12} /> {user.role === 'manager' || user.role === 'Manager' ? 'Manager' : 'Seller'}
             </span>
           </div>
           <div className="sm:ml-auto">
             <Button variant="danger" onClick={logout}>
-              <LogOut size={18} /> Выйти
+              <LogOut size={18} /> Sign Out
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-100 pt-8">
           <div className="space-y-4">
-            <h3 className="font-bold text-gray-900 mb-4">Личные данные</h3>
+            <h3 className="font-bold text-gray-900 mb-4">Personal Details</h3>
             <form onSubmit={handleSave} className="space-y-4">
-              <Input label="Имя пользователя" defaultValue={user.username} disabled />
+              <Input label="Username" defaultValue={user.username} disabled />
               <Input label="Email" defaultValue={user.email} type="email" />
-              {saved && <p className="text-green-600 text-sm">Сохранено ✓</p>}
-              <Button type="submit" className="mt-2">Сохранить</Button>
+              {saved && <p className="text-green-600 text-sm">Saved ✓</p>}
+              <Button type="submit" className="mt-2">Save</Button>
             </form>
           </div>
 
           <div className="space-y-4">
-            <h3 className="font-bold text-gray-900 mb-4">Безопасность</h3>
-            <Input label="Текущий пароль" type="password" placeholder="••••••••" />
-            <Input label="Новый пароль" type="password" placeholder="••••••••" />
-            <Button variant="secondary" className="mt-2">Изменить пароль</Button>
+            <h3 className="font-bold text-gray-900 mb-4">Security</h3>
+            <Input label="Current Password" type="password" placeholder="••••••••" />
+            <Input label="New Password" type="password" placeholder="••••••••" />
+            <Button variant="secondary" className="mt-2">Change Password</Button>
           </div>
         </div>
       </Card>
@@ -63,11 +63,11 @@ export const ProfilePage: React.FC = () => {
         <div className="flex gap-4">
           <div className="bg-blue-100 p-3 rounded-full h-fit"><Shield className="text-blue-600" size={24} /></div>
           <div>
-            <h3 className="font-bold text-blue-900">Права роли: {user.role === 'manager' || user.role === 'Manager' ? 'Менеджер' : 'Продавец'}</h3>
+            <h3 className="font-bold text-blue-900">Role Permissions: {user.role === 'manager' || user.role === 'Manager' ? 'Manager' : 'Seller'}</h3>
             <p className="text-blue-700 text-sm mt-1">
               {(user.role === 'manager' || user.role === 'Manager')
-                ? 'Полный доступ: управление товарами, просмотр аналитики, закрытие дня, удаление продаж.'
-                : 'Доступ к записи продаж и просмотру ежедневной статистики.'}
+                ? 'Full access: product management, analytics, closing the day, deleting sales.'
+                : 'Access to recording sales and viewing daily statistics.'}
             </p>
           </div>
         </div>

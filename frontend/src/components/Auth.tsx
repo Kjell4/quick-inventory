@@ -18,7 +18,7 @@ export const LoginPage: React.FC = () => {
     try {
       await login(username, password);
     } catch (err: any) {
-      setLocalError(err.message || 'Ошибка входа');
+      setLocalError(err.message || 'Login error');
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export const LoginPage: React.FC = () => {
               <Briefcase className="text-white" size={24} />
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Quick Inventory</h2>
-            <p className="text-gray-500 mt-2">Войдите в панель управления</p>
+            <p className="text-gray-500 mt-2">Sign in to your dashboard</p>
           </div>
 
           {localError && (
@@ -51,7 +51,7 @@ export const LoginPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
-              label="Имя пользователя"
+              label="Username"
               type="text"
               placeholder="admin"
               value={username}
@@ -59,7 +59,7 @@ export const LoginPage: React.FC = () => {
               required
             />
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Пароль</label>
+              <label className="text-sm font-medium text-gray-700">Password</label>
               <Input
                 type="password"
                 placeholder="••••••••"
@@ -69,14 +69,14 @@ export const LoginPage: React.FC = () => {
               />
             </div>
             <Button type="submit" className="w-full" size="lg" isLoading={loading}>
-              Войти <ArrowRight size={18} />
+              Sign In <ArrowRight size={18} />
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-500">
-            Нет аккаунта?{' '}
+            Don't have an account?{' '}
             <button onClick={() => navigateTo('signup')} className="text-blue-600 font-medium hover:text-blue-700 hover:underline">
-              Создать аккаунт
+              Create account
             </button>
           </div>
         </Card>
@@ -98,7 +98,7 @@ export const SignupPage: React.FC = () => {
     e.preventDefault();
     setLocalError('');
     if (form.password !== form.confirm) {
-      setLocalError('Пароли не совпадают');
+      setLocalError('Passwords do not match');
       return;
     }
     setLoading(true);
@@ -112,7 +112,7 @@ export const SignupPage: React.FC = () => {
         role,
       });
     } catch (err: any) {
-      setLocalError(err.message || 'Ошибка регистрации');
+      setLocalError(err.message || 'Registration error');
     } finally {
       setLoading(false);
     }
@@ -133,8 +133,8 @@ export const SignupPage: React.FC = () => {
       >
         <Card className="p-8 backdrop-blur-sm bg-white/95 shadow-2xl border-white/20">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Создать аккаунт</h2>
-            <p className="text-gray-500 mt-2">Зарегистрируйтесь для управления складом</p>
+            <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
+            <p className="text-gray-500 mt-2">Register to manage your inventory</p>
           </div>
 
           {localError && (
@@ -144,34 +144,34 @@ export const SignupPage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <Input label="Имя пользователя" placeholder="myusername" value={form.username} onChange={set('username')} required />
+            <Input label="Username" placeholder="myusername" value={form.username} onChange={set('username')} required />
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Имя" placeholder="Иван" value={form.first_name} onChange={set('first_name')} />
-              <Input label="Фамилия" placeholder="Иванов" value={form.last_name} onChange={set('last_name')} />
+              <Input label="First Name" placeholder="John" value={form.first_name} onChange={set('first_name')} />
+              <Input label="Last Name" placeholder="Smith" value={form.last_name} onChange={set('last_name')} />
             </div>
-            <Input label="Email" type="email" placeholder="ivan@example.com" value={form.email} onChange={set('email')} />
+            <Input label="Email" type="email" placeholder="john@example.com" value={form.email} onChange={set('email')} />
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Роль</label>
+              <label className="text-sm font-medium text-gray-700 block mb-2">Role</label>
               <div className="grid grid-cols-2 gap-3">
                 {(['manager', 'seller'] as const).map(r => (
                   <button key={r} type="button" onClick={() => setRole(r)}
                     className={`p-3 text-sm font-medium rounded-lg border text-center transition-all ${role === r ? 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
-                    {r === 'manager' ? 'Менеджер' : 'Продавец'}
+                    {r === 'manager' ? 'Manager' : 'Seller'}
                   </button>
                 ))}
               </div>
             </div>
-            <Input label="Пароль" type="password" placeholder="Минимум 8 символов" value={form.password} onChange={set('password')} required />
-            <Input label="Подтвердить пароль" type="password" placeholder="Повторите пароль" value={form.confirm} onChange={set('confirm')} required />
+            <Input label="Password" type="password" placeholder="Minimum 8 characters" value={form.password} onChange={set('password')} required />
+            <Input label="Confirm Password" type="password" placeholder="Repeat password" value={form.confirm} onChange={set('confirm')} required />
             <Button type="submit" className="w-full mt-2" size="lg" isLoading={loading}>
-              Зарегистрироваться
+              Sign Up
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-500">
-            Уже есть аккаунт?{' '}
+            Already have an account?{' '}
             <button onClick={() => navigateTo('login')} className="text-blue-600 font-medium hover:text-blue-700 hover:underline">
-              Войти
+              Sign In
             </button>
           </div>
         </Card>
