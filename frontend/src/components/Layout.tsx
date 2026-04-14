@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { LayoutDashboard, Package, ShoppingCart, User, LogOut, Menu, X, Briefcase, ChevronDown, ChevronRight, ListChecks, PlusCircle, FileText } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, User, LogOut, Menu, X, Briefcase, ChevronDown, ChevronRight, ListChecks, PlusCircle, FileText, BarChart2 } from 'lucide-react';
 import { cn } from './ui/Shared';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -103,7 +103,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <NavItem page="dashboard" icon={LayoutDashboard} label="Dashboard" />
           {isManager && <ProductSection />}
           <NavItem page="sales" icon={ShoppingCart} label="Daily Sales" />
-          {isManager && <NavItem page="receipts" icon={FileText} label="Receipts" />}
+          {isManager && <NavItem page="receipts"   icon={FileText}   label="Receipts"  />}
+          {isManager && <NavItem page="analytics"  icon={BarChart2}  label="Analytics" />}
           <NavItem page="profile" icon={User} label="Profile" />
         </nav>
 
@@ -147,7 +148,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <NavItem page="dashboard" icon={LayoutDashboard} label="Dashboard" />
             {isManager && <ProductSection />}
             <NavItem page="sales" icon={ShoppingCart} label="Daily Sales" />
-            {isManager && <NavItem page="receipts" icon={FileText} label="Receipts" />}
+            {isManager && <NavItem page="receipts"   icon={FileText}   label="Receipts"  />}
+            {isManager && <NavItem page="analytics"  icon={BarChart2}  label="Analytics" />}
             <NavItem page="profile" icon={User} label="Profile" />
           </nav>
           <div className="border-t border-gray-100 pt-4">

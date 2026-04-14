@@ -40,44 +40,118 @@ interface ReceiptDetail {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────
-// Changed locale to en-US for standard comma separators
-const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' KZT';
+const fmt = (n: number) => n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' ₸';
+const fmtFull = fmt; // alias used inside PDF generator
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 };
 
 const formatDateShort = (iso: string) => {
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-// ─── Load jsPDF + autoTable from CDN ────────────────────────────
+// ─── Load only jsPDF (no plugins needed) ────────────────────────
+let jspdfPromise: Promise<void> | null = null;
+
+function loadJsPDF(): Promise<void> {
+  if (jspdfPromise) return jspdfPromise;
+  jspdfPromise = new Promise((resolve, reject) => {
+    if ((window as any).jspdf?.jsPDF) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => {
+      if ((window as any).jspdf?.jsPDF) resolve();
+      else { jspdfPromise = null; reject(new Error('jsPDF не загрузился')); }
+    };
+    s.onerror = () => { jspdfPromise = null; reject(new Error('Ошибка загрузки jsPDF')); };
+    document.head.appendChild(s);
+  });
+  return jspdfPromise;
+}
+
 function useJsPDF() {
   const [ready, setReady] = useState(false);
-
   useEffect(() => {
-    const loadScript = (src: string): Promise<void> =>
-      new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-          resolve();
-          return;
-        }
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = () => resolve();
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-
-    loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
-      .then(() => loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'))
-      .then(() => setReady(true))
-      .catch(console.error);
+    loadJsPDF().then(() => setReady(true)).catch(console.error);
   }, []);
-
   return ready;
+}
+
+// ─── PDF Table Engine (no autoTable dependency) ──────────────────
+interface ColDef { header: string; width: number; align?: 'left' | 'right' | 'center'; }
+
+function drawTable(
+  doc: any,
+  cols: ColDef[],
+  rows: string[][],
+  startY: number,
+  marginLeft: number,
+  rowH = 8,
+  headerH = 9,
+): number {
+  const totalW = cols.reduce((s, c) => s + c.width, 0);
+  const pad = 2.5;
+  let y = startY;
+  const PAGE_H = 285;
+
+  const newPage = () => {
+    doc.addPage();
+    y = 15;
+    drawHeader(true);
+  };
+
+  const drawHeader = (repeat = false) => {
+    doc.setFillColor(37, 99, 235);
+    doc.rect(marginLeft, y, totalW, headerH, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(255, 255, 255);
+    let x = marginLeft;
+    cols.forEach(col => {
+      const tx = col.align === 'right' ? x + col.width - pad : col.align === 'center' ? x + col.width / 2 : x + pad;
+      doc.text(col.header, tx, y + headerH - 3, { align: col.align === 'right' ? 'right' : col.align === 'center' ? 'center' : 'left' });
+      x += col.width;
+    });
+    y += headerH;
+  };
+
+  drawHeader();
+
+  rows.forEach((row, ri) => {
+    if (y + rowH > PAGE_H) newPage();
+
+    // alternating row background
+    if (ri % 2 === 1) {
+      doc.setFillColor(248, 249, 255);
+      doc.rect(marginLeft, y, totalW, rowH, 'F');
+    }
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(30, 30, 50);
+
+    let x = marginLeft;
+    cols.forEach((col, ci) => {
+      let text = row[ci] ?? '';
+      // truncate if too wide (rough estimate: ~1.8mm per char at 7.5pt)
+      const maxChars = Math.floor((col.width - pad * 2) / 1.65);
+      if (text.length > maxChars) text = text.slice(0, maxChars - 1) + '…';
+
+      const tx = col.align === 'right' ? x + col.width - pad : col.align === 'center' ? x + col.width / 2 : x + pad;
+      doc.text(text, tx, y + rowH - 2.5, { align: col.align === 'right' ? 'right' : col.align === 'center' ? 'center' : 'left' });
+      x += col.width;
+    });
+
+    // bottom border
+    doc.setDrawColor(235, 235, 245);
+    doc.line(marginLeft, y + rowH, marginLeft + totalW, y + rowH);
+    y += rowH;
+  });
+
+  return y; // final y after table
 }
 
 // ─── PDF Generator ───────────────────────────────────────────────
@@ -88,166 +162,134 @@ function generatePDF(receipt: ReceiptDetail) {
   const W = 210;
   const M = 14;
 
-  // ── Blue header banner ──────────────────────────────────────────
+  // ── Blue header ─────────────────────────────────────────────────
   doc.setFillColor(37, 99, 235);
-  doc.rect(0, 0, W, 36, 'F');
+  doc.rect(0, 0, W, 34, 'F');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
+  doc.setFontSize(18);
   doc.setTextColor(255, 255, 255);
-  doc.text('QuickInventory', M, 14);
+  doc.text('QuickInventory', M, 13);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(180, 210, 255);
-  doc.text('DAILY REPORT', M, 22);
+  doc.text('ОТЧЕТ ЗА ДЕНЬ', M, 21);
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
-  doc.text(formatDate(receipt.date), W - M, 14, { align: 'right' });
+  doc.text(formatDate(receipt.date), W - M, 13, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(180, 210, 255);
-  doc.text('Receipt #' + receipt.id, W - M, 22, { align: 'right' });
+  doc.text('Чек #' + receipt.id, W - M, 21, { align: 'right' });
 
   // ── Summary boxes ───────────────────────────────────────────────
-  const boxY = 42;
-  const boxH = 20;
+  const boxY = 40;
+  const boxH = 19;
   const boxW = (W - M * 2 - 8) / 3;
 
-  const boxes: Array<{
-    label: string;
-    value: string;
-    bg: [number, number, number];
-    fg: [number, number, number];
-  }> = [
-    { label: 'REVENUE', value: fmt(receipt.total_income), bg: [235, 242, 255], fg: [37, 99, 235] },
-    { label: 'EXPENSES', value: fmt(receipt.total_cost),   bg: [255, 241, 241], fg: [220, 38, 38] },
-    { label: 'PROFIT',  value: fmt(receipt.total_profit), bg: [236, 253, 245], fg: [22, 163, 74] },
+  const boxes: Array<{ label: string; value: string; bg: [number,number,number]; fg: [number,number,number] }> = [
+    { label: 'ВЫРУЧКА', value: fmtFull(receipt.total_income),  bg: [235,242,255], fg: [37,99,235]  },
+    { label: 'РАСХОДЫ', value: fmtFull(receipt.total_cost),    bg: [255,241,241], fg: [220,38,38]  },
+    { label: 'ПРИБЫЛЬ', value: fmtFull(receipt.total_profit),  bg: [236,253,245], fg: [22,163,74]  },
   ];
 
   boxes.forEach((b, i) => {
     const x = M + i * (boxW + 4);
     doc.setFillColor(b.bg[0], b.bg[1], b.bg[2]);
     doc.roundedRect(x, boxY, boxW, boxH, 2, 2, 'F');
-
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(120, 120, 140);
-    doc.text(b.label, x + 5, boxY + 7);
-
+    doc.setFontSize(6.5);
+    doc.setTextColor(110, 110, 130);
+    doc.text(b.label, x + 4, boxY + 6);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setTextColor(b.fg[0], b.fg[1], b.fg[2]);
-    doc.text(b.value, x + 5, boxY + 16);
+    doc.text(b.value, x + 4, boxY + 14);
   });
 
   // ── Section title ───────────────────────────────────────────────
-  const tableStartY = boxY + boxH + 10;
+  let y = boxY + boxH + 9;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(30, 30, 50);
-  doc.text('Sold items (' + receipt.items.length + ' items)', M, tableStartY - 3);
+  doc.text('Проданные товары — ' + receipt.items.length + ' позиций', M, y);
+  y += 4;
 
-  // ── autoTable ───────────────────────────────────────────────────
-  const rows = receipt.items.map(item => [
+  // ── Table ───────────────────────────────────────────────────────
+  const cols: ColDef[] = [
+    { header: 'Товар',      width: 50, align: 'left'   },
+    { header: 'Категория',  width: 28, align: 'left'   },
+    { header: 'Кол.',       width: 12, align: 'center' },
+    { header: 'Цена',       width: 23, align: 'right'  },
+    { header: 'Выручка',    width: 23, align: 'right'  },
+    { header: 'Расход',     width: 22, align: 'right'  },
+    { header: 'Прибыль',    width: 24, align: 'right'  },
+  ];
+
+  const tableRows = receipt.items.map(item => [
     item.product_name,
     item.category,
     String(item.quantity),
-    fmt(item.sale_price),
-    fmt(item.total_income),
-    fmt(item.total_cost),
-    fmt(item.profit),
+    fmtFull(item.sale_price),
+    fmtFull(item.total_income),
+    fmtFull(item.total_cost),
+    fmtFull(item.profit),
   ]);
 
-  (doc as any).autoTable({
-    startY: tableStartY,
-    margin: { left: M, right: M },
-    head: [['Product', 'Category', 'QTY', 'Price', 'Revenue', 'Cost', 'Profit']],
-    body: rows,
-    foot: [[
-      { content: 'Total: ' + receipt.items.length + ' items', colSpan: 4, styles: { fontStyle: 'bold' } },
-      { content: fmt(receipt.total_income), styles: { fontStyle: 'bold', textColor: [37, 99, 235] } },
-      { content: fmt(receipt.total_cost),   styles: { fontStyle: 'bold', textColor: [220, 38, 38] } },
-      { content: fmt(receipt.total_profit), styles: { fontStyle: 'bold', textColor: [22, 163, 74] } },
-    ]],
-    showFoot: 'lastPage',
-    columnStyles: {
-      0: { cellWidth: 52 },
-      1: { cellWidth: 28 },
-      2: { cellWidth: 12, halign: 'center' },
-      3: { cellWidth: 22, halign: 'right' },
-      4: { cellWidth: 24, halign: 'right', textColor: [37, 99, 235] },
-      5: { cellWidth: 22, halign: 'right', textColor: [220, 38, 38] },
-      6: { cellWidth: 22, halign: 'right' },
-    },
-    headStyles: {
-      fillColor: [37, 99, 235],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 8,
-      cellPadding: 4,
-      halign: 'left',
-    },
-    bodyStyles: {
-      fontSize: 8,
-      cellPadding: 3,
-      textColor: [30, 30, 50],
-    },
-    footStyles: {
-      fillColor: [245, 247, 255],
-      textColor: [30, 30, 50],
-      fontStyle: 'bold',
-      fontSize: 8,
-      cellPadding: 4,
-    },
-    alternateRowStyles: {
-      fillColor: [250, 251, 255],
-    },
-    didParseCell: (data: any) => {
-      if (data.section === 'body' && data.column.index === 6) {
-        const item = receipt.items[data.row.index];
-        if (item) {
-          data.cell.styles.textColor = item.profit >= 0 ? [22, 163, 74] : [220, 38, 38];
-          data.cell.styles.fontStyle = 'bold';
-        }
-      }
-    },
-  });
+  const finalY = drawTable(doc, cols, tableRows, y, M);
 
-  // ── Profit summary below table ──────────────────────────────────
-  const finalY: number = (doc as any).lastAutoTable.finalY + 8;
+  // ── Totals row ──────────────────────────────────────────────────
+  const totalW = cols.reduce((s, c) => s + c.width, 0);
+  doc.setFillColor(240, 242, 255);
+  doc.rect(M, finalY, totalW, 9, 'F');
 
-  if (finalY < 268) {
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+
+  doc.setTextColor(50, 50, 70);
+  doc.text('Итого: ' + receipt.items.length + ' позиций', M + 2.5, finalY + 6);
+
+  const colX = (idx: number) => M + cols.slice(0, idx).reduce((s, c) => s + c.width, 0);
+
+  doc.setTextColor(37, 99, 235);
+  doc.text(fmtFull(receipt.total_income), colX(5) + cols[4].width - 2.5, finalY + 6, { align: 'right' });
+  doc.setTextColor(220, 38, 38);
+  doc.text(fmtFull(receipt.total_cost),   colX(6) + cols[5].width - 2.5, finalY + 6, { align: 'right' });
+  doc.setTextColor(22, 163, 74);
+  doc.text(fmtFull(receipt.total_profit), colX(7) + cols[6].width - 2.5, finalY + 6, { align: 'right' });
+
+  // ── Profit summary box ──────────────────────────────────────────
+  const summaryY = finalY + 14;
+  if (summaryY < 270) {
     doc.setFillColor(236, 253, 245);
-    doc.roundedRect(M, finalY, W - M * 2, 16, 2, 2, 'F');
-
+    doc.roundedRect(M, summaryY, W - M * 2, 14, 2, 2, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(22, 163, 74);
-    doc.text('Net Profit: ' + fmt(receipt.total_profit), M + 5, finalY + 10);
-
-    const marginPct = receipt.total_income > 0
+    doc.text('Чистая прибыль: ' + fmtFull(receipt.total_profit), M + 5, summaryY + 9);
+    const pct = receipt.total_income > 0
       ? ((receipt.total_profit / receipt.total_income) * 100).toFixed(1) + '%'
       : '—';
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(100, 140, 110);
-    doc.text('Margin: ' + marginPct, W - M - 5, finalY + 10, { align: 'right' });
+    doc.setFontSize(8);
+    doc.setTextColor(80, 130, 100);
+    doc.text('Маржа: ' + pct, W - M - 5, summaryY + 9, { align: 'right' });
   }
 
-  // ── Page footer ─────────────────────────────────────────────────
-  const pageCount: number = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
+  // ── Page numbers ────────────────────────────────────────────────
+  const pages: number = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(180, 180, 180);
+    doc.setFontSize(6.5);
+    doc.setTextColor(180, 180, 190);
     doc.text(
-      'Generated: ' + new Date().toLocaleString('en-US') + '   |   Page ' + i + ' of ' + pageCount,
-      W / 2, 290, { align: 'center' }
+      'Сформировано: ' + new Date().toLocaleString('ru-RU') + '   |   Стр. ' + i + ' из ' + pages,
+      W / 2, 292, { align: 'center' }
     );
   }
 
@@ -270,17 +312,24 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
   }, [id]);
 
   const handleDownloadPDF = async () => {
-    if (!receipt || !pdfReady) return;
+    if (!receipt) return;
     setPdfLoading(true);
-    try { generatePDF(receipt); }
-    finally { setPdfLoading(false); }
+    try {
+      await loadJsPDF();
+      generatePDF(receipt);
+    } catch (err) {
+      console.error('PDF error:', err);
+      alert('Не удалось загрузить PDF библиотеку. Проверьте интернет-соединение.');
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   if (loading) {
     return (
       <div className="py-20 text-center text-gray-400">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        Loading receipt...
+        Загрузка чека...
       </div>
     );
   }
@@ -289,7 +338,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
     return (
       <div className="py-20 text-center text-gray-400">
         <AlertCircle className="mx-auto mb-2" size={32} />
-        Receipt not found
+        Чек не найден
       </div>
     );
   }
@@ -306,7 +355,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Receipt #{receipt.id}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Чек #{receipt.id}</h1>
             <p className="text-gray-500 text-sm capitalize">{formatDate(receipt.date)}</p>
           </div>
         </div>
@@ -315,9 +364,8 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
           disabled={pdfLoading || !pdfReady}
           className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
         >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <Download size={16} />
-          {pdfLoading ? 'Generating...' : 'Download PDF'}
+          {pdfLoading ? 'Генерация...' : 'Скачать PDF'}
         </button>
       </div>
 
@@ -326,25 +374,25 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
         <Card className="p-5 flex items-center gap-4">
           <div className="p-3 bg-blue-100 rounded-xl"><DollarSign className="text-blue-600" size={22} /></div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Revenue</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Выручка</p>
             <p className="text-xl font-bold text-gray-900">{fmt(receipt.total_income)}</p>
           </div>
         </Card>
         <Card className="p-5 flex items-center gap-4">
           <div className="p-3 bg-red-100 rounded-xl"><TrendingDown className="text-red-500" size={22} /></div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Expenses</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Расходы</p>
             <p className="text-xl font-bold text-gray-900">{fmt(receipt.total_cost)}</p>
           </div>
         </Card>
         <Card className="p-5 flex items-center gap-4">
           <div className="p-3 bg-green-100 rounded-xl"><TrendingUp className="text-green-600" size={22} /></div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Profit</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Прибыль</p>
             <p className="text-xl font-bold text-green-600">{fmt(receipt.total_profit)}</p>
             {receipt.total_income > 0 && (
               <p className="text-xs text-gray-400">
-                margin {((receipt.total_profit / receipt.total_income) * 100).toFixed(1)}%
+                маржа {((receipt.total_profit / receipt.total_income) * 100).toFixed(1)}%
               </p>
             )}
           </div>
@@ -354,19 +402,19 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
       {/* Items table */}
       <Card className="p-6">
         <h2 className="text-base font-bold text-gray-900 mb-4">
-          Sold items <span className="text-gray-400 font-normal">({receipt.items.length} items)</span>
+          Проданные товары <span className="text-gray-400 font-normal">({receipt.items.length} позиций)</span>
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-gray-100 text-xs text-gray-500 bg-gray-50 uppercase tracking-wide">
-                <th className="px-3 py-3 font-medium rounded-l-lg">Product</th>
-                <th className="px-3 py-3 font-medium">Category</th>
-                <th className="px-3 py-3 font-medium text-center">Qty</th>
-                <th className="px-3 py-3 font-medium text-right">Price</th>
-                <th className="px-3 py-3 font-medium text-right">Revenue</th>
-                <th className="px-3 py-3 font-medium text-right">Cost</th>
-                <th className="px-3 py-3 font-medium text-right rounded-r-lg">Profit</th>
+                <th className="px-3 py-3 font-medium rounded-l-lg">Товар</th>
+                <th className="px-3 py-3 font-medium">Категория</th>
+                <th className="px-3 py-3 font-medium text-center">Кол-во</th>
+                <th className="px-3 py-3 font-medium text-right">Цена</th>
+                <th className="px-3 py-3 font-medium text-right">Выручка</th>
+                <th className="px-3 py-3 font-medium text-right">Расход</th>
+                <th className="px-3 py-3 font-medium text-right rounded-r-lg">Прибыль</th>
               </tr>
             </thead>
             <tbody>
@@ -389,7 +437,7 @@ const ReceiptDetailView: React.FC<{ id: number; onBack: () => void }> = ({ id, o
             <tfoot>
               <tr className="border-t-2 border-gray-200 bg-gray-50">
                 <td className="px-3 py-3 font-bold text-gray-900" colSpan={4}>
-                  Total ({receipt.items.length} items)
+                  Итого ({receipt.items.length} поз.)
                 </td>
                 <td className="px-3 py-3 text-right font-bold text-blue-600">{fmt(receipt.total_income)}</td>
                 <td className="px-3 py-3 text-right font-bold text-red-500">{fmt(receipt.total_cost)}</td>
@@ -419,21 +467,21 @@ const ReceiptsListView: React.FC<{ onSelect: (id: number) => void }> = ({ onSele
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Receipts</h1>
-        <p className="text-gray-500">History of closed days and revenue</p>
+        <p className="text-gray-500">История закрытых дней и выручки</p>
       </div>
 
       {loading ? (
         <div className="py-20 text-center text-gray-400">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          Loading...
+          Загрузка...
         </div>
       ) : receipts.length === 0 ? (
         <Card className="p-12 text-center">
           <div className="bg-gray-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
             <Receipt className="text-gray-400" size={28} />
           </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-1">No closed days</h3>
-          <p className="text-gray-400 text-sm">Closed days will appear here after clicking "Close Day" in the sales section</p>
+          <h3 className="text-lg font-semibold text-gray-700 mb-1">Нет закрытых дней</h3>
+          <p className="text-gray-400 text-sm">Закрытые дни появятся здесь после нажатия «Закрыть день» в разделе продаж</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -455,22 +503,22 @@ const ReceiptsListView: React.FC<{ onSelect: (id: number) => void }> = ({ onSele
                       <p className="font-semibold text-gray-900 capitalize">{formatDateShort(r.date)}</p>
                       <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
                         <ShoppingBag size={11} />
-                        {r.items_count} items sold
+                        {r.items_count} позиций продано
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-6 sm:gap-10">
                     <div className="text-right hidden sm:block">
-                      <p className="text-xs text-gray-400">Revenue</p>
+                      <p className="text-xs text-gray-400">Выручка</p>
                       <p className="font-semibold text-blue-600">{fmt(r.total_income)}</p>
                     </div>
                     <div className="text-right hidden sm:block">
-                      <p className="text-xs text-gray-400">Expenses</p>
+                      <p className="text-xs text-gray-400">Расходы</p>
                       <p className="font-semibold text-red-500">{fmt(r.total_cost)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-400">Profit</p>
+                      <p className="text-xs text-gray-400">Прибыль</p>
                       <p className={`font-bold ${r.total_profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {fmt(r.total_profit)}
                       </p>

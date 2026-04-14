@@ -154,6 +154,16 @@ export const receiptsApi = {
   detail: (id: number) => apiFetch(`/receipts/${id}/`),
 };
 
+// ─── Analytics ──────────────────────────────────────────────────
+export const analyticsApi = {
+  get: (year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    if (year)  params.set('year',  String(year));
+    if (month) params.set('month', String(month));
+    return apiFetch(`/analytics/?${params.toString()}`);
+  },
+};
+
 // ─── Barcode / QrBot API ──────────────────────────────────────────
 const DJANGO_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 

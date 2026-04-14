@@ -7,6 +7,7 @@ import { ProductList, AddProductPage } from './components/ProductManagement';
 import { DailySales } from './components/DailySales';
 import { ProfilePage } from './components/ProfilePage';
 import { Receipts } from './components/Receipts';
+import { Analytics } from './components/Analytics';
 
 const AppContent: React.FC = () => {
   const { currentPage, user, loading } = useApp();
@@ -33,8 +34,9 @@ const AppContent: React.FC = () => {
       {currentPage === 'products' && <ProductList />}
       {currentPage === 'add-product' && <AddProductPage />}
       {currentPage === 'sales' && <DailySales />}
-      {currentPage === 'receipts' && <Receipts />}
-      {currentPage === 'profile' && <ProfilePage />}
+      {currentPage === 'receipts'   && <Receipts />}
+      {currentPage === 'analytics'  && <Analytics />}
+      {currentPage === 'profile'    && <ProfilePage />}
     </Layout>
   );
 };
